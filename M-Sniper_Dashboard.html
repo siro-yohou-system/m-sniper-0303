@@ -103,7 +103,7 @@ select:focus{border-color:var(--cyan)}
 </head>
 <body>
 <div class="wrap">
-
+ 
   <header class="header">
     <div class="header-left">
       <div class="logo">M-SNIPER <span>0303</span></div>
@@ -114,16 +114,16 @@ select:focus{border-color:var(--cyan)}
       <div class="clock" id="clock">--:--:--</div>
     </div>
   </header>
-
+ 
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('dashboard',this)">ダッシュボード</button>
     <button class="nav-btn" onclick="showPage('analysis',this)">解析ログ</button>
     <button class="nav-btn" onclick="showPage('venues',this)">会場別成績</button>
     <button class="nav-btn" onclick="showPage('settings',this)">設定</button>
   </nav>
-
+ 
   <div class="alert-banner" id="alertBanner"></div>
-
+ 
   <!-- ━━━ DASHBOARD ━━━ -->
   <div class="page active" id="page-dashboard">
     <div class="metrics-grid">
@@ -142,7 +142,7 @@ select:focus{border-color:var(--cyan)}
       <div id="today-schedule"><div class="loading">スケジュール取得中</div></div>
     </div>
   </div>
-
+ 
   <!-- ━━━ ANALYSIS LOG ━━━ -->
   <div class="page" id="page-analysis">
     <div class="card">
@@ -155,7 +155,7 @@ select:focus{border-color:var(--cyan)}
       </div>
     </div>
   </div>
-
+ 
   <!-- ━━━ VENUES ━━━ -->
   <div class="page" id="page-venues">
     <div class="card">
@@ -163,11 +163,11 @@ select:focus{border-color:var(--cyan)}
       <div id="venue-grid" class="venue-grid"><div class="loading">会場データ取得中</div></div>
     </div>
   </div>
-
+ 
   <!-- ━━━ SETTINGS ━━━ -->
   <div class="page" id="page-settings">
     <div class="settings-grid">
-
+ 
       <!-- 通知チャンネル -->
       <div class="setting-group">
         <div class="setting-group-title">通知チャンネル</div>
@@ -180,7 +180,7 @@ select:focus{border-color:var(--cyan)}
           <label class="toggle" id="toggle-line"><input type="checkbox" id="s-notify-line"><span class="toggle-slider"></span></label>
         </div>
       </div>
-
+ 
       <!-- 通知内容 -->
       <div class="setting-group">
         <div class="setting-group-title">通知内容</div>
@@ -206,7 +206,7 @@ select:focus{border-color:var(--cyan)}
           <label class="toggle"><input type="checkbox" id="s-notify-miss"><span class="toggle-slider"></span></label>
         </div>
       </div>
-
+ 
       <!-- 解析パラメータ -->
       <div class="setting-group">
         <div class="setting-group-title">解析パラメータ</div>
@@ -226,7 +226,7 @@ select:focus{border-color:var(--cyan)}
           <div class="range-val" id="s-tenkake-val">6</div>
         </div>
       </div>
-
+ 
       <!-- 資産保護 -->
       <div class="setting-group">
         <div class="setting-group-title">資産保護・レポート</div>
@@ -250,7 +250,7 @@ select:focus{border-color:var(--cyan)}
           </select>
         </div>
       </div>
-
+ 
       <!-- システム状態 -->
       <div class="setting-group">
         <div class="setting-group-title">システム状態</div>
@@ -258,17 +258,17 @@ select:focus{border-color:var(--cyan)}
         <div class="setting-row"><div class="setting-label">最終データ取得</div><span style="font-family:var(--font-mono);font-size:12px;color:var(--text2)" id="last-fetch">--</span></div>
         <div class="setting-row"><div class="setting-label">α値最終更新</div><span style="font-family:var(--font-mono);font-size:12px;color:var(--text2)" id="last-alpha">--</span></div>
       </div>
-
+ 
     </div>
     <button class="btn-save" onclick="saveSettings()">⚡ 設定を保存してGASに反映</button>
   </div>
-
+ 
 </div>
 <div class="toast" id="toast"></div>
-
+ 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyl95PFSRL3ml3OjZOCrhuFIKqUhOUrBaKv0Y6ZgfzAJfIWyHs8ZmFstXhWj3aiH6Q2mg/exec";
-
+ 
 // ━━━ 時計 ━━━
 setInterval(() => {
   document.getElementById("clock").textContent =
@@ -276,7 +276,7 @@ setInterval(() => {
 }, 1000);
 document.getElementById("clock").textContent =
   new Date().toLocaleTimeString("ja-JP",{hour12:false});
-
+ 
 // ━━━ ページ切り替え ━━━
 function showPage(id, btn) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
@@ -288,7 +288,7 @@ function showPage(id, btn) {
   else if(id==="venues") loadVenues();
   else if(id==="settings") loadSettings();
 }
-
+ 
 // ━━━ GAS通信 ━━━
 async function gasGet(action) {
   const res = await fetch(`${GAS_URL}?action=${action}`);
@@ -298,7 +298,7 @@ async function gasPost(body) {
   const res = await fetch(GAS_URL,{method:"POST",body:JSON.stringify(body)});
   return res.json();
 }
-
+ 
 // ━━━ 日付ユーティリティ ━━━
 function toDateStr(val) {
   if(!val) return "";
@@ -309,7 +309,7 @@ function toDateStr(val) {
     String(d.getDate()).padStart(2,"0");
 }
 function todayStr() { return toDateStr(new Date()); }
-
+ 
 // ━━━ DASHBOARD ━━━
 async function loadDashboard() {
   try {
@@ -331,7 +331,7 @@ async function loadDashboard() {
     showAlert("GASへの接続に失敗しました。URLを確認してください。");
   }
 }
-
+ 
 function renderDashboard(logs) {
   const td = todayStr();
   const todayLogs = logs.filter(l => toDateStr(l.date) === td);
@@ -339,19 +339,19 @@ function renderDashboard(logs) {
   const total  = todayLogs.filter(l => l.result==="的中"||l.result==="不的中").length;
   const rate   = total>0 ? Math.round(hits/total*1000)/10 : 0;
   const profit = todayLogs.reduce((s,l)=>s+(Number(l.profit)||0),0);
-
+ 
   document.getElementById("m-analyzed").textContent = todayLogs.length;
   document.getElementById("m-notified").textContent = todayLogs.filter(l=>l.result).length;
   document.getElementById("m-rate").textContent = rate+"%";
   document.getElementById("m-hits").textContent = `${hits} / ${total} R`;
   document.getElementById("m-profit").textContent = (profit>=0?"+":"")+profit.toLocaleString();
-
+ 
   const topLog = [...todayLogs].sort((a,b)=>(b.score||0)-(a.score||0))[0];
   if(topLog){
     document.getElementById("m-topscore").textContent = topLog.score||"--";
     document.getElementById("m-topvenue").textContent = topLog.venueName||"--";
   }
-
+ 
   // 最新解析3件（全ログから）
   const latest = [...logs].reverse().slice(0,3);
   document.getElementById("latest-analysis").innerHTML = latest.length===0
@@ -371,7 +371,7 @@ function renderDashboard(logs) {
           <div>${rb}</div></div>`;
       }).join("");
 }
-
+ 
 function renderSchedule(schedules) {
   const td = todayStr();
   // 日付の比較: schedules[].date は "yyyy/MM/dd" 形式
@@ -379,19 +379,19 @@ function renderSchedule(schedules) {
     const ds = String(s.date||"").substring(0,10).replace(/-/g,"/");
     return ds === td;
   });
-
+ 
   if(todaySched.length===0){
     document.getElementById("today-schedule").innerHTML=
       '<div style="text-align:center;padding:20px;color:var(--text2)">本日のスケジュールがありません</div>';
     return;
   }
-
+ 
   const venueMap={};
   todaySched.forEach(s=>{
     if(!venueMap[s.venueId]) venueMap[s.venueId]={name:s.venueName,races:[]};
     venueMap[s.venueId].races.push(s);
   });
-
+ 
   // 時刻を文字列化
   function fmtTime(t){
     if(!t) return "--";
@@ -399,7 +399,7 @@ function renderSchedule(schedules) {
       return new Date(t).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
     return String(t).substring(0,5);
   }
-
+ 
   document.getElementById("today-schedule").innerHTML =
     Object.values(venueMap).map(v=>{
       const sc = v.races.reduce((a,r)=>{a[r.status]=(a[r.status]||0)+1;return a},{});
@@ -416,7 +416,7 @@ function renderSchedule(schedules) {
         </div></div>`;
     }).join("");
 }
-
+ 
 // ━━━ 解析ログ ━━━
 async function loadAnalysisLog() {
   const tbody = document.getElementById("analysis-table-body");
@@ -446,7 +446,7 @@ async function loadAnalysisLog() {
     tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--red)">取得エラー</td></tr>';
   }
 }
-
+ 
 // ━━━ 会場別成績 ━━━
 async function loadVenues() {
   const wrap = document.getElementById("venue-grid");
@@ -458,7 +458,7 @@ async function loadVenues() {
     }
     const logData = await gasGet("getLog");
     const logs = (logData.status==="ok"&&logData.logs)||[];
-
+ 
     const statsMap={};
     logs.forEach(l=>{
       if(!l.venueId) return;
@@ -466,7 +466,7 @@ async function loadVenues() {
       if(l.result==="的中"||l.result==="不的中") statsMap[l.venueId].total++;
       if(l.result==="的中") statsMap[l.venueId].hits++;
     });
-
+ 
     const html = Object.entries(data.params).map(([vid,p])=>{
       const s = statsMap[vid]||{hits:0,total:0};
       const rate = s.total>0 ? Math.round(s.hits/s.total*1000)/10 : null;
@@ -491,7 +491,7 @@ async function loadVenues() {
     wrap.innerHTML=`<div style="color:var(--red);padding:20px">取得エラー: ${e.message}</div>`;
   }
 }
-
+ 
 // ━━━ 設定 ━━━
 function toggleThresholdRow() {
   const allOn = document.getElementById("s-notify-all").checked;
@@ -499,67 +499,67 @@ function toggleThresholdRow() {
   const row   = document.getElementById("threshold-row");
   row.classList.toggle("hidden", allOn || !thOn);
 }
-
+ 
 async function loadSettings() {
   try {
     const data = await gasGet("getSettings");
     if(data.status!=="ok") throw new Error("GAS error");
     const s = data.settings;
-
+ 
     // 通知チャンネル
     const method = s.notify_method||"email";
     document.getElementById("s-notify-email").checked = method==="email"||method==="both";
     document.getElementById("s-notify-line").checked  = method==="line" ||method==="both";
-
+ 
     // 通知内容
     document.getElementById("s-notify-all").checked           = s.notify_all==="true"||s.notify_all===true;
     document.getElementById("s-notify-threshold-on").checked  = s.notify_threshold_on!=="false";
     document.getElementById("s-notify-hit").checked           = s.notify_hit!=="false";
     document.getElementById("s-notify-miss").checked          = s.notify_miss==="true"||s.notify_miss===true;
-
+ 
     const th = Number(s.notify_threshold)||70;
     document.getElementById("s-threshold").value = th;
     document.getElementById("s-threshold-val").textContent = th+"%";
     toggleThresholdRow();
-
+ 
     // 解析パラメータ
     const sw=Number(s.skip_wind_speed)||6;
     document.getElementById("s-skip-wind").value=sw;
     document.getElementById("s-skip-wind-val").textContent=sw+"m";
-
+ 
     const sg=Number(s.singularity_r_value)||10;
     document.getElementById("s-singularity").value=sg;
     document.getElementById("s-singularity-val").textContent=sg;
-
+ 
     const tk=Number(s.tenkake_r_value)||6;
     document.getElementById("s-tenkake").value=tk;
     document.getElementById("s-tenkake-val").textContent=tk;
-
+ 
     const ll=Number(s.consecutive_loss_limit)||3;
     document.getElementById("s-loss-limit").value=ll;
     document.getElementById("s-loss-limit-val").textContent=ll+"連敗";
-
+ 
     const dl=Number(s.result_delay_min)||20;
     document.getElementById("s-result-delay").value=dl;
     document.getElementById("s-result-delay-val").textContent=dl+"分後";
-
+ 
     document.getElementById("s-report-hour").value=Number(s.daily_report_hour)||21;
-
+ 
     document.getElementById("gas-status").textContent="接続OK";
     document.getElementById("gas-status").className="badge badge-hit";
     document.getElementById("last-fetch").textContent=new Date().toLocaleTimeString("ja-JP");
-
+ 
   } catch(e) {
     document.getElementById("gas-status").textContent="接続エラー";
     document.getElementById("gas-status").className="badge badge-miss";
   }
 }
-
+ 
 async function saveSettings() {
   const emailOn = document.getElementById("s-notify-email").checked;
   const lineOn  = document.getElementById("s-notify-line").checked;
   const method  = emailOn&&lineOn?"both":emailOn?"email":lineOn?"line":"none";
-
+ 
   const settings = {
     notify_method:          method,
     notify_all:             document.getElementById("s-notify-all").checked,
@@ -574,7 +574,7 @@ async function saveSettings() {
     result_delay_min:       Number(document.getElementById("s-result-delay").value),
     daily_report_hour:      Number(document.getElementById("s-report-hour").value),
   };
-
+ 
   try {
     const res = await gasPost({action:"saveSettings",settings});
     if(res.status==="ok"){
@@ -585,7 +585,7 @@ async function saveSettings() {
     }
   } catch(e) { showToast("❌ GAS接続エラー"); }
 }
-
+ 
 // ━━━ ユーティリティ ━━━
 function showAlert(msg){
   const el=document.getElementById("alertBanner");
@@ -597,7 +597,7 @@ function showToast(msg){
   t.textContent=msg; t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"),3000);
 }
-
+ 
 // ━━━ 初期ロード ━━━
 loadDashboard();
 setInterval(()=>{
