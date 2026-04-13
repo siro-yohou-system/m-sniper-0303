@@ -6,7 +6,7 @@
 <title>M-Sniper 0303 | Dashboard</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
+  
 :root {
   --bg:       #070b12;
   --bg2:      #0d1520;
@@ -786,9 +786,16 @@ async function loadDashboard() {
 function renderDashboard(logs) {
   const today = new Date().toLocaleDateString("ja-JP");
   const todayLogs = logs.filter(l => {
-    const d = new Date(l.date);
-    return d.toLocaleDateString("ja-JP") === today;
-  });
+  if (!l.date) return false;
+  const d = new Date(l.date);
+  const dateStr = d.getFullYear() + "/" +
+    String(d.getMonth()+1).padStart(2,"0") + "/" +
+    String(d.getDate()).padStart(2,"0");
+  const todayStr = new Date().getFullYear() + "/" +
+    String(new Date().getMonth()+1).padStart(2,"0") + "/" +
+    String(new Date().getDate()).padStart(2,"0");
+  return dateStr === todayStr;
+});
 
   const hits    = todayLogs.filter(l => l.result === "的中").length;
   const notified= todayLogs.filter(l => l.result).length;
@@ -849,9 +856,13 @@ function renderDashboard(logs) {
 function renderSchedule(schedules) {
   const today = new Date().toLocaleDateString("ja-JP");
   const todaySched = schedules.filter(s => {
-    const d = new Date(s.date);
-    return d.toLocaleDateString("ja-JP") === today;
-  });
+  if (!s.date) return false;
+  return String(s.date).includes(
+    new Date().getFullYear() + "/" +
+    String(new Date().getMonth()+1).padStart(2,"0") + "/" +
+    String(new Date().getDate()).padStart(2,"0")
+  );
+});
 
   if (todaySched.length === 0) {
     document.getElementById("today-schedule").innerHTML =
