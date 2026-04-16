@@ -65,7 +65,6 @@ tbody td{padding:10px 12px;color:var(--text);white-space:nowrap}
 .venue-detail{font-size:11px;color:var(--text2)}
 .alpha-bar{height:3px;background:var(--bg2);border-radius:2px;overflow:hidden;margin-top:6px}
 .alpha-fill{height:100%;border-radius:2px;background:var(--cyan)}
-/* ━━━ SETTINGS ━━━ */
 .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
 .setting-group{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
 .setting-group-title{font-family:var(--font-en);font-size:12px;font-weight:600;color:var(--cyan);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
@@ -78,14 +77,12 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;hei
 .range-val{font-family:var(--font-mono);font-size:14px;color:var(--cyan);min-width:44px;text-align:right}
 select{background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:13px;font-family:var(--font-ja);outline:none;cursor:pointer}
 select:focus{border-color:var(--cyan)}
-/* トグル */
 .toggle{position:relative;width:42px;height:22px;cursor:pointer;flex-shrink:0}
 .toggle input{opacity:0;width:0;height:0}
 .toggle-slider{position:absolute;inset:0;background:var(--bg3);border:1px solid var(--border);border-radius:11px;transition:.2s}
 .toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--text2);border-radius:50%;transition:.2s}
 .toggle input:checked + .toggle-slider{background:rgba(0,212,255,.2);border-color:var(--cyan)}
 .toggle input:checked + .toggle-slider::before{transform:translateX(20px);background:var(--cyan)}
-/* 無効化トグル */
 .toggle.disabled{opacity:.4;pointer-events:none}
 .btn-save{width:100%;padding:12px;background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(0,153,187,.1));border:1px solid rgba(0,212,255,.4);border-radius:8px;color:var(--cyan);font-family:var(--font-ja);font-size:15px;font-weight:700;cursor:pointer;margin-top:16px;transition:all .2s;letter-spacing:1px;text-shadow:0 0 8px rgba(0,212,255,.4)}
 .btn-save:hover{background:linear-gradient(135deg,rgba(0,212,255,.3),rgba(0,153,187,.2));box-shadow:0 0 20px rgba(0,212,255,.2)}
@@ -108,7 +105,7 @@ select:focus{border-color:var(--cyan)}
   <header class="header">
     <div class="header-left">
       <div class="logo">M-SNIPER <span>0303</span></div>
-      <div class="ver">Ver 5.01 AUTO</div>
+      <div class="ver">Ver 5.02 AUTO</div>
     </div>
     <div class="header-right">
       <div class="status-dot" title="システム稼働中"></div>
@@ -126,7 +123,7 @@ select:focus{border-color:var(--cyan)}
 
   <div class="alert-banner" id="alertBanner"></div>
 
-  <!-- ━━━ DASHBOARD ━━━ -->
+  <!-- DASHBOARD -->
   <div class="page active" id="page-dashboard">
     <div class="metrics-grid">
       <div class="metric cyan"><div class="metric-label">本日の解析レース</div><div class="metric-value" id="m-analyzed">--</div><div class="metric-sub">通知済 <span id="m-notified">--</span>R</div></div>
@@ -145,7 +142,7 @@ select:focus{border-color:var(--cyan)}
     </div>
   </div>
 
-  <!-- ━━━ ANALYSIS LOG ━━━ -->
+  <!-- ANALYSIS LOG -->
   <div class="page" id="page-analysis">
     <div class="card">
       <div class="card-title">解析ログ（直近30件）</div>
@@ -158,7 +155,7 @@ select:focus{border-color:var(--cyan)}
     </div>
   </div>
 
-  <!-- ━━━ VENUES ━━━ -->
+  <!-- VENUES -->
   <div class="page" id="page-venues">
     <div class="card">
       <div class="card-title">会場別成績・α値</div>
@@ -166,7 +163,7 @@ select:focus{border-color:var(--cyan)}
     </div>
   </div>
 
-  <!-- ━━━ CHART ━━━ -->
+  <!-- CHART -->
   <div class="page" id="page-chart">
     <div class="card" style="margin-bottom:14px">
       <div class="card-title">累計収支推移</div>
@@ -187,11 +184,9 @@ select:focus{border-color:var(--cyan)}
     </div>
   </div>
 
-  <!-- ━━━ SETTINGS ━━━ -->
+  <!-- SETTINGS -->
   <div class="page" id="page-settings">
     <div class="settings-grid">
-
-      <!-- 通知チャンネル -->
       <div class="setting-group">
         <div class="setting-group-title">通知チャンネル</div>
         <div class="setting-row">
@@ -203,8 +198,6 @@ select:focus{border-color:var(--cyan)}
           <label class="toggle" id="toggle-line"><input type="checkbox" id="s-notify-line"><span class="toggle-slider"></span></label>
         </div>
       </div>
-
-      <!-- 通知内容 -->
       <div class="setting-group">
         <div class="setting-group-title">通知内容</div>
         <div class="setting-row">
@@ -229,8 +222,6 @@ select:focus{border-color:var(--cyan)}
           <label class="toggle"><input type="checkbox" id="s-notify-miss"><span class="toggle-slider"></span></label>
         </div>
       </div>
-
-      <!-- 解析パラメータ -->
       <div class="setting-group">
         <div class="setting-group-title">解析パラメータ</div>
         <div class="setting-row">
@@ -249,8 +240,6 @@ select:focus{border-color:var(--cyan)}
           <div class="range-val" id="s-tenkake-val">6</div>
         </div>
       </div>
-
-      <!-- 資産保護 -->
       <div class="setting-group">
         <div class="setting-group-title">資産保護・レポート</div>
         <div class="setting-row">
@@ -273,15 +262,12 @@ select:focus{border-color:var(--cyan)}
           </select>
         </div>
       </div>
-
-      <!-- システム状態 -->
       <div class="setting-group">
         <div class="setting-group-title">システム状態</div>
         <div class="setting-row"><div class="setting-label">GAS接続</div><span class="badge badge-hit" id="gas-status">確認中</span></div>
         <div class="setting-row"><div class="setting-label">最終データ取得</div><span style="font-family:var(--font-mono);font-size:12px;color:var(--text2)" id="last-fetch">--</span></div>
         <div class="setting-row"><div class="setting-label">α値最終更新</div><span style="font-family:var(--font-mono);font-size:12px;color:var(--text2)" id="last-alpha">--</span></div>
       </div>
-
     </div>
     <button class="btn-save" onclick="saveSettings()">⚡ 設定を保存してGASに反映</button>
   </div>
@@ -292,7 +278,6 @@ select:focus{border-color:var(--cyan)}
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyl95PFSRL3ml3OjZOCrhuFIKqUhOUrBaKv0Y6ZgfzAJfIWyHs8ZmFstXhWj3aiH6Q2mg/exec";
 
-// ━━━ 時計 ━━━
 setInterval(() => {
   document.getElementById("clock").textContent =
     new Date().toLocaleTimeString("ja-JP",{hour12:false});
@@ -300,7 +285,6 @@ setInterval(() => {
 document.getElementById("clock").textContent =
   new Date().toLocaleTimeString("ja-JP",{hour12:false});
 
-// ━━━ ページ切り替え ━━━
 function showPage(id, btn) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -313,7 +297,6 @@ function showPage(id, btn) {
   else if(id==="settings") loadSettings();
 }
 
-// ━━━ GAS通信 ━━━
 async function gasGet(action) {
   const res = await fetch(`${GAS_URL}?action=${action}`);
   return res.json();
@@ -323,7 +306,6 @@ async function gasPost(body) {
   return res.json();
 }
 
-// ━━━ 日付ユーティリティ ━━━
 function toDateStr(val) {
   if(!val) return "";
   const d = new Date(val);
@@ -376,7 +358,6 @@ function renderDashboard(logs) {
     document.getElementById("m-topvenue").textContent = topLog.venueName||"--";
   }
 
-  // 最新解析3件（全ログから）
   const latest = [...logs].reverse().slice(0,3);
   document.getElementById("latest-analysis").innerHTML = latest.length===0
     ? '<div style="text-align:center;padding:20px;color:var(--text2)">解析データがありません</div>'
@@ -398,7 +379,6 @@ function renderDashboard(logs) {
 
 function renderSchedule(schedules) {
   const td = todayStr();
-  // 日付の比較: schedules[].date は "yyyy/MM/dd" 形式
   const todaySched = schedules.filter(s => {
     const ds = String(s.date||"").substring(0,10).replace(/-/g,"/");
     return ds === td;
@@ -416,7 +396,6 @@ function renderSchedule(schedules) {
     venueMap[s.venueId].races.push(s);
   });
 
-  // 時刻を文字列化
   function fmtTime(t){
     if(!t) return "--";
     if(t instanceof Date || (typeof t==="string" && t.includes("1899")))
@@ -471,48 +450,65 @@ async function loadAnalysisLog() {
   }
 }
 
-// ━━━ 会場別成績 ━━━
+// ━━━ 会場別成績（バグ修正済み） ━━━
 async function loadVenues() {
   const wrap = document.getElementById("venue-grid");
   try {
     const data = await gasGet("getMasterParams");
-    if(data.status!=="ok"||!data.params){
-      wrap.innerHTML='<div style="color:var(--red);padding:20px">データ取得エラー</div>';
+
+    // ★修正: GASは { status:"ok", data:[...] } の配列形式で返す
+    if(data.status !== "ok" || !data.data || !Array.isArray(data.data)) {
+      wrap.innerHTML = `<div style="color:var(--red);padding:20px">データ取得エラー<br><small style="color:var(--text2)">${JSON.stringify(data).substring(0,200)}</small></div>`;
       return;
     }
-    const logData = await gasGet("getLog");
-    const logs = (logData.status==="ok"&&logData.logs)||[];
 
-    const statsMap={};
-    logs.forEach(l=>{
+    const logData = await gasGet("getLog");
+    const logs = (logData.status === "ok" && logData.logs) || [];
+
+    // venueIdで集計（"12#"形式に統一）
+    const statsMap = {};
+    logs.forEach(l => {
       if(!l.venueId) return;
-      if(!statsMap[l.venueId]) statsMap[l.venueId]={hits:0,total:0};
-      if(l.result==="的中"||l.result==="不的中") statsMap[l.venueId].total++;
-      if(l.result==="的中") statsMap[l.venueId].hits++;
+      const vid = String(l.venueId);
+      if(!statsMap[vid]) statsMap[vid] = {hits:0, total:0};
+      if(l.result==="的中"||l.result==="不的中") statsMap[vid].total++;
+      if(l.result==="的中") statsMap[vid].hits++;
     });
 
-    const html = Object.entries(data.params).map(([vid,p])=>{
-      const s = statsMap[vid]||{hits:0,total:0};
-      const rate = s.total>0 ? Math.round(s.hits/s.total*1000)/10 : null;
-      const alpha = parseFloat(p.alpha)||0.80;
+    // ★修正: data.data は配列。日本語キーでアクセス
+    const html = data.data.map(p => {
+      const vid      = String(p["会場ID"] || "");
+      const venueName= p["会場名"]  || "--";
+      const group    = p["グループ"] || "";
+      const alpha    = parseFloat(p["α補正値"]) || 0.80;
+      const inRate   = parseFloat(p["イン逃げ率"]) || 0;
+      const patch    = p["特記パッチ"] || "";
+
+      const s    = statsMap[vid] || {hits:0, total:0};
+      const rate = s.total > 0 ? Math.round(s.hits / s.total * 1000) / 10 : null;
+
       const ac = alpha>=0.90?"var(--green)":alpha>=0.80?"var(--cyan)":alpha>=0.70?"var(--amber)":"var(--red)";
-      const gc = p.group==="超鉄壁"?"var(--green)":p.group==="鉄壁"?"var(--cyan)":p.group==="波乱"?"var(--amber)":p.group==="難攻"?"var(--red)":"var(--text2)";
+      const gc = group==="超鉄壁"?"var(--green)":group==="鉄壁"?"var(--cyan)":group==="波乱"?"var(--amber)":group==="難攻"?"var(--red)":"var(--text2)";
       const rc = rate===null?"var(--text2)":rate>=50?"var(--green)":rate>=30?"var(--amber)":"var(--red)";
+
       return `<div class="venue-card">
         <div style="flex:1">
-          <div class="venue-name">${p.venueName||"--"}</div>
-          <div class="venue-id">${vid} <span style="color:${gc};font-size:10px">${p.group||""}</span></div>
+          <div class="venue-name">${venueName}</div>
+          <div class="venue-id">${vid} <span style="color:${gc};font-size:10px">${group}</span></div>
           <div class="venue-alpha" style="color:${ac}">α = ${alpha.toFixed(3)}</div>
-          <div class="alpha-bar"><div class="alpha-fill" style="width:${alpha*100}%"></div></div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">イン逃げ率 ${(inRate*100).toFixed(0)}%${patch?' · '+patch:''}</div>
+          <div class="alpha-bar"><div class="alpha-fill" style="width:${Math.min(alpha*100,100)}%"></div></div>
         </div>
         <div class="venue-stats">
-          <div class="venue-rate" style="color:${rc}">${rate!==null?rate+"%":"--"}</div>
+          <div class="venue-rate" style="color:${rc}">${rate !== null ? rate+"%" : "--"}</div>
           <div class="venue-detail">${s.hits}/${s.total}R</div>
-        </div></div>`;
+        </div>
+      </div>`;
     }).join("");
-    wrap.innerHTML = html||'<div style="color:var(--text2);padding:20px">データなし</div>';
+
+    wrap.innerHTML = html || '<div style="color:var(--text2);padding:20px">データなし</div>';
   } catch(e) {
-    wrap.innerHTML=`<div style="color:var(--red);padding:20px">取得エラー: ${e.message}</div>`;
+    wrap.innerHTML = `<div style="color:var(--red);padding:20px">取得エラー: ${e.message}</div>`;
   }
 }
 
@@ -530,12 +526,10 @@ async function loadSettings() {
     if(data.status!=="ok") throw new Error("GAS error");
     const s = data.settings;
 
-    // 通知チャンネル
     const method = s.notify_method||"email";
     document.getElementById("s-notify-email").checked = method==="email"||method==="both";
     document.getElementById("s-notify-line").checked  = method==="line" ||method==="both";
 
-    // 通知内容
     document.getElementById("s-notify-all").checked           = s.notify_all==="true"||s.notify_all===true;
     document.getElementById("s-notify-threshold-on").checked  = s.notify_threshold_on!=="false";
     document.getElementById("s-notify-hit").checked           = s.notify_hit!=="false";
@@ -546,7 +540,6 @@ async function loadSettings() {
     document.getElementById("s-threshold-val").textContent = th+"%";
     toggleThresholdRow();
 
-    // 解析パラメータ
     const sw=Number(s.skip_wind_speed)||6;
     document.getElementById("s-skip-wind").value=sw;
     document.getElementById("s-skip-wind-val").textContent=sw+"m";
@@ -568,11 +561,9 @@ async function loadSettings() {
     document.getElementById("s-result-delay-val").textContent=dl+"分後";
 
     document.getElementById("s-report-hour").value=Number(s.daily_report_hour)||21;
-
     document.getElementById("gas-status").textContent="接続OK";
     document.getElementById("gas-status").className="badge badge-hit";
     document.getElementById("last-fetch").textContent=new Date().toLocaleTimeString("ja-JP");
-
   } catch(e) {
     document.getElementById("gas-status").textContent="接続エラー";
     document.getElementById("gas-status").className="badge badge-miss";
@@ -610,24 +601,10 @@ async function saveSettings() {
   } catch(e) { showToast("❌ GAS接続エラー"); }
 }
 
-// ━━━ ユーティリティ ━━━
-function showAlert(msg){
-  const el=document.getElementById("alertBanner");
-  el.textContent=msg; el.classList.add("show");
-  setTimeout(()=>el.classList.remove("show"),5000);
-}
-function showToast(msg){
-  const t=document.getElementById("toast");
-  t.textContent=msg; t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),3000);
-}
-
-
-// ━━━ チャートインスタンス ━━━
+// ━━━ チャート ━━━
 let chartCum = null;
 let chartRate = null;
 
-// ━━━ 収支推移グラフ ━━━
 async function loadChart() {
   try {
     const data = await gasGet('getDailyStats');
@@ -645,9 +622,9 @@ async function loadChart() {
 }
 
 function renderCharts(stats) {
-  const labels  = stats.map(s => s.date.substring(5)); // MM/DD形式
-  const cumData = stats.map(s => s.cumProfit);
-  const rateData= stats.map(s => s.rate);
+  const labels   = stats.map(s => s.date.substring(5));
+  const cumData  = stats.map(s => s.cumProfit);
+  const rateData = stats.map(s => s.rate);
 
   const baseOpts = {
     responsive: true,
@@ -658,7 +635,6 @@ function renderCharts(stats) {
     },
   };
 
-  // 累計収支グラフ
   if(chartCum) chartCum.destroy();
   const ctx1 = document.getElementById('chartCumProfit').getContext('2d');
   chartCum = new Chart(ctx1, {
@@ -680,26 +656,15 @@ function renderCharts(stats) {
       ...baseOpts,
       plugins: {
         ...baseOpts.plugins,
-        tooltip: {
-          callbacks: {
-            label: ctx => (ctx.raw >= 0 ? '+' : '') + ctx.raw.toLocaleString() + '円'
-          }
-        }
+        tooltip: { callbacks: { label: ctx => (ctx.raw >= 0 ? '+' : '') + ctx.raw.toLocaleString() + '円' } }
       },
       scales: {
         ...baseOpts.scales,
-        y: {
-          ...baseOpts.scales.y,
-          ticks: {
-            ...baseOpts.scales.y.ticks,
-            callback: v => (v >= 0 ? '+' : '') + v.toLocaleString() + '円'
-          }
-        }
+        y: { ...baseOpts.scales.y, ticks: { ...baseOpts.scales.y.ticks, callback: v => (v >= 0 ? '+' : '') + v.toLocaleString() + '円' } }
       }
     }
   });
 
-  // 的中率グラフ
   if(chartRate) chartRate.destroy();
   const ctx2 = document.getElementById('chartRate').getContext('2d');
   chartRate = new Chart(ctx2, {
@@ -716,19 +681,10 @@ function renderCharts(stats) {
     },
     options: {
       ...baseOpts,
-      plugins: {
-        ...baseOpts.plugins,
-        tooltip: {
-          callbacks: { label: ctx => ctx.raw.toFixed(1) + '%' }
-        }
-      },
+      plugins: { ...baseOpts.plugins, tooltip: { callbacks: { label: ctx => ctx.raw.toFixed(1) + '%' } } },
       scales: {
         ...baseOpts.scales,
-        y: {
-          ...baseOpts.scales.y,
-          min: 0, max: 100,
-          ticks: { ...baseOpts.scales.y.ticks, callback: v => v + '%' }
-        }
+        y: { ...baseOpts.scales.y, min: 0, max: 100, ticks: { ...baseOpts.scales.y.ticks, callback: v => v + '%' } }
       }
     }
   });
@@ -737,24 +693,45 @@ function renderCharts(stats) {
 function renderChartTable(stats) {
   const tbody = document.getElementById('chart-table-body');
   tbody.innerHTML = [...stats].reverse().map(s => {
-    const profitColor = s.profit >= 0 ? 'var(--green)' : 'var(--red)';
+    // ★修正: betAmountが0または異常値の場合はhits*100で代替表示
+    const displayBetAmount = (s.betAmount > 0 && s.betAmount < 9999999)
+      ? s.betAmount
+      : s.total * 100; // フォールバック: 1R=100円想定
+
+    const profitColor = s.profit    >= 0 ? 'var(--green)' : 'var(--red)';
     const cumColor    = s.cumProfit >= 0 ? 'var(--green)' : 'var(--red)';
     const rateColor   = s.rate >= 50 ? 'var(--green)' : s.rate >= 30 ? 'var(--amber)' : 'var(--red)';
+
+    // ★修正: 回収率をbetAmountが正常な場合のみ計算
+    const roi = displayBetAmount > 0
+      ? (s.dividend / displayBetAmount * 100).toFixed(1)
+      : s.roi.toFixed(1);
+
     return '<tr>' +
       '<td style="font-family:var(--font-mono);font-size:12px">' + s.date + '</td>' +
       '<td style="font-family:var(--font-mono)">' + s.total + 'R</td>' +
       '<td style="font-family:var(--font-mono)">' + s.hits + '/' + s.total + '</td>' +
       '<td style="font-family:var(--font-mono);color:' + rateColor + ';font-weight:700">' + s.rate.toFixed(1) + '%</td>' +
-      '<td style="font-family:var(--font-mono);color:var(--text2)">' + s.betAmount.toLocaleString() + '円</td>' +
+      '<td style="font-family:var(--font-mono);color:var(--text2)">' + displayBetAmount.toLocaleString() + '円</td>' +
       '<td style="font-family:var(--font-mono);color:var(--cyan)">' + s.dividend.toLocaleString() + '円</td>' +
       '<td style="font-family:var(--font-mono);color:' + profitColor + ';font-weight:700">' + (s.profit >= 0 ? '+' : '') + s.profit.toLocaleString() + '円</td>' +
       '<td style="font-family:var(--font-mono);color:' + cumColor + ';font-weight:700">' + (s.cumProfit >= 0 ? '+' : '') + s.cumProfit.toLocaleString() + '円</td>' +
-      '<td style="font-family:var(--font-mono);color:' + rateColor + '">' + s.roi.toFixed(1) + '%</td>' +
+      '<td style="font-family:var(--font-mono);color:' + rateColor + '">' + roi + '%</td>' +
       '</tr>';
   }).join('');
 }
 
-// ━━━ 初期ロード ━━━
+function showAlert(msg){
+  const el=document.getElementById("alertBanner");
+  el.textContent=msg; el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),5000);
+}
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),3000);
+}
+
 loadDashboard();
 setInterval(()=>{
   if(document.getElementById("page-dashboard").classList.contains("active")) loadDashboard();
