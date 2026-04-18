@@ -105,7 +105,7 @@ select:focus{border-color:var(--cyan)}
   <header class="header">
     <div class="header-left">
       <div class="logo">M-SNIPER <span>0303</span></div>
-      <div class="ver">Ver 5.02 AUTO</div>
+      <div class="ver">Ver 5.03 AUTO</div>
     </div>
     <div class="header-right">
       <div class="status-dot" title="システム稼働中"></div>
@@ -118,6 +118,7 @@ select:focus{border-color:var(--cyan)}
     <button class="nav-btn" onclick="showPage('chart',this)">収支推移</button>
     <button class="nav-btn" onclick="showPage('analysis',this)">解析ログ</button>
     <button class="nav-btn" onclick="showPage('venues',this)">会場別成績</button>
+    <button class="nav-btn" onclick="showPage('matching',this)">照合分析</button>
     <button class="nav-btn" onclick="showPage('settings',this)">設定</button>
   </nav>
 
@@ -160,6 +161,59 @@ select:focus{border-color:var(--cyan)}
     <div class="card">
       <div class="card-title">会場別成績・α値</div>
       <div id="venue-grid" class="venue-grid"><div class="loading">会場データ取得中</div></div>
+    </div>
+  </div>
+
+  <!-- MATCHING -->
+  <div class="page" id="page-matching">
+    <!-- サマリーカード -->
+    <div class="metrics-grid" style="margin-bottom:14px">
+      <div class="metric cyan"><div class="metric-label">総解析レース</div><div class="metric-value" id="mt-total">--</div><div class="metric-sub">件</div></div>
+      <div class="metric green"><div class="metric-label">的中率</div><div class="metric-value" id="mt-hitrate">--%</div><div class="metric-sub" id="mt-hits">-- / --</div></div>
+      <div class="metric amber"><div class="metric-label">軸的中率</div><div class="metric-value" id="mt-axisrate">--%</div><div class="metric-sub">1着が軸艇</div></div>
+      <div class="metric red"><div class="metric-label">軸外れ率</div><div class="metric-value" id="mt-axismiss">--%</div><div class="metric-sub">不的中の内訳</div></div>
+      <div class="metric purple"><div class="metric-label">紐外れ率</div><div class="metric-value" id="mt-himomiss">--%</div><div class="metric-sub">不的中の内訳</div></div>
+    </div>
+
+    <!-- 外れ要因グラフ -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">外れ要因分析（② Miss Pattern）</div>
+      <div id="miss-chart-wrap" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
+        <div class="loading">データ取得中</div>
+      </div>
+    </div>
+
+    <!-- 気象×的中率マトリックス -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">気象条件別的中率（① Weather Matrix）</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>会場</th><th>総R</th><th>全体</th>
+            <th>風0-2m</th><th>風3-4m</th><th>風5m+</th>
+            <th>波0-2cm</th><th>波3-5cm</th><th>波6cm+</th>
+            <th>3連単</th><th>2連複</th><th>3連複</th>
+            <th>回収率</th>
+          </tr></thead>
+          <tbody id="weather-matrix-body"><tr><td colspan="13" style="text-align:center;padding:30px;color:var(--text2)">読み込み中...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 照合モード：直近レース詳細 -->
+    <div class="card">
+      <div class="card-title">照合モード（④ 予想 vs 結果）</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>日時</th><th>会場</th><th>R</th><th>買い目タイプ</th>
+            <th>推奨買い目</th><th>スコア</th><th>結果着順</th>
+            <th>軸</th><th>2着</th><th>的中</th>
+            <th>外れ要因</th><th>払戻</th><th>収支</th>
+          </tr></thead>
+          <tbody id="matching-table-body"><tr><td colspan="13" style="text-align:center;padding:30px;color:var(--text2)">読み込み中...</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -294,26 +348,14 @@ function showPage(id, btn) {
   else if(id==="analysis") loadAnalysisLog();
   else if(id==="venues") loadVenues();
   else if(id==="chart") loadChart();
+  else if(id==="matching") loadMatching();
   else if(id==="settings") loadSettings();
 }
 
-function gasGet(action) {
-  return new Promise((resolve, reject) => {
-    const callbackName = 'cb_' + action + '_' + Date.now();
-    const script = document.createElement('script');
-    
-    window[callbackName] = function(data) {
-      delete window[callbackName];
-      document.body.removeChild(script);
-      resolve(data);
-    };
-    
-    script.src = `${GAS_URL}?action=${action}&callback=${callbackName}`;
-    script.onerror = () => reject(new Error('Failed to fetch'));
-    document.body.appendChild(script);
-  });
+async function gasGet(action) {
+  const res = await fetch(`${GAS_URL}?action=${action}`);
+  return res.json();
 }
-  
 async function gasPost(body) {
   const res = await fetch(GAS_URL,{method:"POST",body:JSON.stringify(body)});
   return res.json();
@@ -743,6 +785,180 @@ function showToast(msg){
   const t=document.getElementById("toast");
   t.textContent=msg; t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"),3000);
+}
+
+// ━━━ 照合分析 ━━━
+async function loadMatching() {
+  try {
+    const data = await gasGet("getPatternStats");
+    if(data.status !== "ok") {
+      document.getElementById("miss-chart-wrap").innerHTML =
+        '<div style="color:var(--red);padding:20px">データ取得エラー</div>';
+      return;
+    }
+
+    // サマリー
+    const s = data.summary || {};
+    const total = (s.totalHit||0) + (s.totalMiss||0);
+    document.getElementById("mt-total").textContent    = total;
+    document.getElementById("mt-hitrate").textContent  = (s.hitRate||0) + "%";
+    document.getElementById("mt-hits").textContent     = `${s.totalHit||0} / ${total}`;
+    document.getElementById("mt-axisrate").textContent = (s.axisHitRate||0) + "%";
+    document.getElementById("mt-axismiss").textContent = (s.axisMissRate||0) + "%";
+    document.getElementById("mt-himomiss").textContent = (s.himoMissRate||0) + "%";
+
+    // 外れ要因グラフ（会場別）
+    renderMissChart(data.missStats || []);
+
+    // 気象マトリックス
+    renderWeatherMatrix(data.venueStats || []);
+
+    // 照合テーブル
+    renderMatchingTable(data.recentPatterns || []);
+
+  } catch(e) {
+    document.getElementById("miss-chart-wrap").innerHTML =
+      `<div style="color:var(--red);padding:20px">取得エラー: ${e.message}</div>`;
+  }
+}
+
+function renderMissChart(missStats) {
+  const wrap = document.getElementById("miss-chart-wrap");
+  if(!missStats || missStats.length === 0) {
+    wrap.innerHTML = '<div style="color:var(--text2);padding:20px">データ蓄積中（レース結果が記録されると表示されます）</div>';
+    return;
+  }
+
+  // 会場別に集計
+  const venueMap = {};
+  missStats.forEach(m => {
+    const vid = m["会場ID"] || m["会場名"] || "";
+    const vname = m["会場名"] || vid;
+    if(!venueMap[vid]) venueMap[vid] = { name:vname, axis:0, himo:0, other:0, total:0 };
+    const cnt = parseInt(m["件数"]) || 0;
+    const factor = m["外れ要因"] || "";
+    venueMap[vid].total += cnt;
+    if(factor === "軸外れ") venueMap[vid].axis += cnt;
+    else if(factor === "紐外れ") venueMap[vid].himo += cnt;
+    else venueMap[vid].other += cnt;
+  });
+
+  wrap.innerHTML = Object.values(venueMap).filter(v => v.total > 0).map(v => {
+    const axPct  = Math.round(v.axis/v.total*100);
+    const hmPct  = Math.round(v.himo/v.total*100);
+    const otPct  = 100 - axPct - hmPct;
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px">${v.name}
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text2);margin-left:6px">${v.total}件</span>
+      </div>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:6px">
+        <div style="width:${axPct}%;background:var(--red)"></div>
+        <div style="width:${hmPct}%;background:var(--amber)"></div>
+        <div style="width:${otPct}%;background:var(--text2)"></div>
+      </div>
+      <div style="display:flex;gap:10px;font-size:11px">
+        <span style="color:var(--red)">■軸外れ ${axPct}%</span>
+        <span style="color:var(--amber)">■紐外れ ${hmPct}%</span>
+        <span style="color:var(--text2)">■その他 ${otPct}%</span>
+      </div>
+    </div>`;
+  }).join("") || '<div style="color:var(--text2);padding:20px">データなし</div>';
+}
+
+function renderWeatherMatrix(venueStats) {
+  const tbody = document.getElementById("weather-matrix-body");
+  if(!venueStats || venueStats.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">データ蓄積中</td></tr>';
+    return;
+  }
+
+  const fmt = (v) => {
+    if(v === "-" || v === "" || v === null || v === undefined) return '<span style="color:var(--text2)">-</span>';
+    const n = parseFloat(v);
+    if(isNaN(n)) return '<span style="color:var(--text2)">-</span>';
+    const col = n >= 30 ? "var(--green)" : n >= 15 ? "var(--amber)" : "var(--red)";
+    return `<span style="font-family:var(--font-mono);color:${col};font-weight:700">${n}%</span>`;
+  };
+
+  tbody.innerHTML = venueStats.map(v => {
+    const total = parseInt(v["総レース"]) || 0;
+    const rate  = parseFloat(v["的中率"]) || 0;
+    const rc    = rate >= 30 ? "var(--green)" : rate >= 15 ? "var(--amber)" : "var(--red)";
+    const roi   = parseFloat(v["回収率"]) || 0;
+    const roiC  = roi >= 100 ? "var(--green)" : roi >= 70 ? "var(--amber)" : "var(--red)";
+    return `<tr>
+      <td style="font-weight:700">${v["会場名"]||"--"}</td>
+      <td style="font-family:var(--font-mono);color:var(--text2)">${total}</td>
+      <td><span style="font-family:var(--font-mono);color:${rc};font-weight:700">${rate}%</span></td>
+      <td>${fmt(v["風速0-2m_的中率"])}</td>
+      <td>${fmt(v["風速3-4m_的中率"])}</td>
+      <td>${fmt(v["風速5m以上_的中率"])}</td>
+      <td>${fmt(v["波高0-2cm_的中率"])}</td>
+      <td>${fmt(v["波高3-5cm_的中率"])}</td>
+      <td>${fmt(v["波高6cm以上_的中率"])}</td>
+      <td>${fmt(v["3連単流し_的中率"])}</td>
+      <td>${fmt(v["2連複_的中率"])}</td>
+      <td>${fmt(v["3連複BOX_的中率"])}</td>
+      <td><span style="font-family:var(--font-mono);color:${roiC}">${roi}%</span></td>
+    </tr>`;
+  }).join("");
+}
+
+function renderMatchingTable(patterns) {
+  const tbody = document.getElementById("matching-table-body");
+  if(!patterns || patterns.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">データ蓄積中</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = [...patterns].reverse().map(p => {
+    const isHit   = p["的中/不的中"] === "的中";
+    const rb      = isHit
+      ? '<span class="badge badge-hit">的中</span>'
+      : '<span class="badge badge-miss">不的中</span>';
+
+    const axis1   = p["軸的中"] === "○"
+      ? '<span style="color:var(--green)">○</span>'
+      : '<span style="color:var(--red)">×</span>';
+    const sec2    = p["2着的中"] === "○"
+      ? '<span style="color:var(--green)">○</span>'
+      : '<span style="color:var(--red)">×</span>';
+
+    const factor  = p["外れ要因"] || "-";
+    const fc      = factor === "軸外れ" ? "var(--red)"
+                  : factor === "紐外れ" ? "var(--amber)"
+                  : factor === "的中"   ? "var(--green)"
+                  : "var(--text2)";
+
+    const profit  = parseFloat(p["正確な収支"]) || 0;
+    const pc      = profit >= 0 ? "var(--green)" : "var(--red)";
+
+    const time    = p["日時"] ? new Date(p["日時"]).toLocaleString("ja-JP",{
+      month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"
+    }) : "--";
+
+    const betTypeLabel = p["買い目タイプ"] === "trifecta" ? "3連単"
+                       : p["買い目タイプ"] === "trio"     ? "3連複"
+                       : p["買い目タイプ"] === "exacta"   ? "2連複" : "-";
+
+    const resultStr = [p["1着"],p["2着"],p["3着"]].filter(Boolean).join("-") || "--";
+
+    return `<tr>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text2)">${time}</td>
+      <td style="font-weight:700">${p["会場名"]||"--"}</td>
+      <td style="font-family:var(--font-mono)">${p["レースNo"]||"--"}</td>
+      <td><span class="badge badge-skip">${betTypeLabel}</span></td>
+      <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis">${p["買い目"]||"--"}</td>
+      <td style="font-family:var(--font-mono);color:var(--cyan)">${p["スコア"]||"--"}</td>
+      <td style="font-family:var(--font-mono)">${resultStr}</td>
+      <td style="text-align:center">${axis1}</td>
+      <td style="text-align:center">${sec2}</td>
+      <td>${rb}</td>
+      <td style="color:${fc};font-size:12px">${factor}</td>
+      <td style="font-family:var(--font-mono);color:var(--cyan)">${(parseFloat(p["正確な払戻"])||0).toLocaleString()}円</td>
+      <td style="font-family:var(--font-mono);color:${pc};font-weight:700">${profit>=0?"+":""}${profit.toLocaleString()}円</td>
+    </tr>`;
+  }).join("");
 }
 
 loadDashboard();
