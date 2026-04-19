@@ -119,6 +119,7 @@ select:focus{border-color:var(--cyan)}
     <button class="nav-btn" onclick="showPage('analysis',this)">解析ログ</button>
     <button class="nav-btn" onclick="showPage('venues',this)">会場別成績</button>
     <button class="nav-btn" onclick="showPage('matching',this)">照合分析</button>
+    <button class="nav-btn" onclick="showPage('backtest',this)">照合・調整</button>
     <button class="nav-btn" onclick="showPage('settings',this)">設定</button>
   </nav>
 
@@ -326,6 +327,100 @@ select:focus{border-color:var(--cyan)}
     <button class="btn-save" onclick="saveSettings()">⚡ 設定を保存してGASに反映</button>
   </div>
 
+<!-- BACKTEST -->
+<div class="page" id="page-backtest">
+
+  <!-- 日付・会場指定 -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">バックテスト設定</div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">対象日付</div>
+        <input type="date" id="bt-date"
+          style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-mono);outline:none"
+          value="">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">会場</div>
+        <select id="bt-venue"
+          style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none">
+          <option value="ALL">全会場</option>
+          <option value="01#">桐生</option><option value="02#">戸田</option>
+          <option value="03#">江戸川</option><option value="04#">平和島</option>
+          <option value="05#">多摩川</option><option value="06#">浜名湖</option>
+          <option value="07#">蒲郡</option><option value="08#">常滑</option>
+          <option value="09#">津</option><option value="10#">三国</option>
+          <option value="11#">びわこ</option><option value="12#">住之江</option>
+          <option value="13#">尼崎</option><option value="14#">鳴門</option>
+          <option value="15#">丸亀</option><option value="16#">児島</option>
+          <option value="17#">宮島</option><option value="18#">徳山</option>
+          <option value="19#">下関</option><option value="20#">若松</option>
+          <option value="21#">芦屋</option><option value="22#">福岡</option>
+          <option value="23#">唐津</option><option value="24#">大村</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">レース範囲</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="bt-from" min="1" max="12" value="1"
+            style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;font-family:var(--font-mono);width:56px;outline:none">
+          <span style="color:var(--text2)">〜</span>
+          <input type="number" id="bt-to" min="1" max="12" value="12"
+            style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;font-family:var(--font-mono);width:56px;outline:none">
+          <span style="font-size:11px;color:var(--text2)">R</span>
+        </div>
+      </div>
+      <div style="margin-top:18px">
+        <button onclick="runBacktest()"
+          style="padding:8px 20px;background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(0,153,187,.1));border:1px solid rgba(0,212,255,.4);border-radius:7px;color:var(--cyan);font-family:var(--font-ja);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s">
+          ▶ バックテスト実行（GAS）
+        </button>
+      </div>
+    </div>
+    <div id="bt-status" style="margin-top:10px;font-size:12px;color:var(--text2)"></div>
+  </div>
+
+  <!-- BACKTEST_LOGの結果表示 -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">バックテスト結果ログ</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>実行日時</th><th>対象日</th><th>会場</th>
+          <th>総R</th><th>軸的中</th><th>軸的中率</th>
+          <th>旧α</th><th>新α</th><th>変化</th>
+        </tr></thead>
+        <tbody id="bt-log-body">
+          <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">読み込み中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <button onclick="loadBacktestLog()"
+      style="margin-top:10px;padding:6px 14px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer">
+      🔄 ログを更新
+    </button>
+  </div>
+
+  <!-- MASTER_PARAMSの現在値 -->
+  <div class="card">
+    <div class="card-title">現在のMASTER_PARAMS（α値・EV値）</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>会場</th><th>グループ</th><th>α値</th>
+          <th>1号艇EV</th><th>2号艇EV</th><th>3号艇EV</th>
+          <th>4号艇EV</th><th>5号艇EV</th><th>6号艇EV</th>
+        </tr></thead>
+        <tbody id="bt-master-body">
+          <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">読み込み中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+  
 </div>
 <div class="toast" id="toast"></div>
 
@@ -350,6 +445,7 @@ function showPage(id, btn) {
   else if(id==="chart") loadChart();
   else if(id==="matching") loadMatching();
   else if(id==="settings") loadSettings();
+  else if(id==="backtest") { loadBacktestLog(); loadBacktestMaster(); }
 }
 
 async function gasGet(action) {
@@ -961,6 +1057,108 @@ function renderMatchingTable(patterns) {
   }).join("");
 }
 
+// ━━━ バックテスト・調整 ━━━
+(function initBacktestDate(){
+  // 今日の日付をデフォルト設定
+  const d = new Date();
+  d.setDate(d.getDate() - 1); // デフォルトは昨日
+  document.getElementById("bt-date").value =
+    d.getFullYear()+"-"+
+    String(d.getMonth()+1).padStart(2,"0")+"-"+
+    String(d.getDate()).padStart(2,"0");
+})();
+
+function runBacktest() {
+  const dateVal = document.getElementById("bt-date").value;
+  const venue   = document.getElementById("bt-venue").value;
+  const from    = document.getElementById("bt-from").value;
+  const to      = document.getElementById("bt-to").value;
+
+  if(!dateVal){
+    showToast("❌ 日付を選択してください");
+    return;
+  }
+
+  // GASのrunBacktestByVenueRangeをdoGetから呼ぶのはできないので
+  // ユーザーにGASで実行するよう案内 + パラメータをコピー
+  const hd = dateVal.replace(/-/g,"");
+  const gasFunc = venue === "ALL"
+    ? `runBacktestAndAdjust("${hd}")`
+    : `runBacktestByVenueRange("${hd}", "${venue}", ${from}, ${to})`;
+
+  document.getElementById("bt-status").innerHTML =
+    `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:var(--font-mono);font-size:12px">
+      <div style="color:var(--amber);margin-bottom:4px">⚡ GASエディタで以下の関数を実行してください：</div>
+      <div style="color:var(--cyan);user-select:all">${gasFunc}</div>
+      <div style="color:var(--text2);margin-top:6px;font-size:11px">
+        実行後「ログを更新」ボタンを押すと結果が表示されます
+      </div>
+    </div>`;
+
+  // ログを自動更新
+  setTimeout(loadBacktestLog, 3000);
+}
+
+async function loadBacktestLog() {
+  const tbody = document.getElementById("bt-log-body");
+  try {
+    const data = await gasGet("getBacktestLog");
+    if(!data || !data.logs || data.logs.length === 0){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text2)">バックテスト未実行</td></tr>';
+      return;
+    }
+    tbody.innerHTML = [...data.logs].reverse().slice(0, 20).map(r => {
+      const delta = ((r.newAlpha||0) - (r.oldAlpha||0));
+      const dc    = delta > 0 ? "var(--green)" : delta < 0 ? "var(--red)" : "var(--text2)";
+      const ac    = (r.newAlpha||0) >= 0.80 ? "var(--green)"
+                  : (r.newAlpha||0) >= 0.65 ? "var(--cyan)"
+                  : (r.newAlpha||0) >= 0.55 ? "var(--amber)" : "var(--red)";
+      const hitRate = r.axisHitRate||r["軸的中率"]||"--";
+      return `<tr>
+        <td style="font-family:var(--font-mono);font-size:11px;color:var(--text2)">${r.execDate||r["実行日時"]||"--"}</td>
+        <td style="font-family:var(--font-mono);color:var(--text2)">${r.targetDate||r["対象日"]||"--"}</td>
+        <td style="font-weight:700">${r.venue||r["会場"]||"--"}</td>
+        <td style="font-family:var(--font-mono)">${r.total||r["総レース"]||"--"}</td>
+        <td style="font-family:var(--font-mono)">${r.axleHits||r["軸的中"]||"--"}</td>
+        <td style="font-family:var(--font-mono);font-weight:700;color:var(--cyan)">${hitRate}</td>
+        <td style="font-family:var(--font-mono);color:var(--text2)">${(r.oldAlpha||r["旧α"]||"--")}</td>
+        <td style="font-family:var(--font-mono);color:${ac};font-weight:700">${(r.newAlpha||r["新α"]||"--")}</td>
+        <td style="font-family:var(--font-mono);color:${dc};font-weight:700">${delta>0?"+":""}${delta.toFixed ? delta.toFixed(3) : "--"}</td>
+      </tr>`;
+    }).join("");
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー: ${e.message}</td></tr>`;
+  }
+}
+
+async function loadBacktestMaster() {
+  const tbody = document.getElementById("bt-master-body");
+  try {
+    const data = await gasGet("getMasterParams");
+    if(data.status !== "ok" || !data.data){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.data.map(p => {
+      const alpha = parseFloat(p["α補正値"]) || 0;
+      const ac = alpha>=0.85?"var(--green)":alpha>=0.70?"var(--cyan)":alpha>=0.55?"var(--amber)":"var(--red)";
+      const evCols = [1,2,3,4,5,6].map(n => {
+        const ev = parseFloat(p[`${n}号艇EV`]) || 1.0;
+        const ec = ev>=1.2?"var(--green)":ev>=1.0?"var(--text)":ev>=0.8?"var(--amber)":"var(--red)";
+        return `<td style="font-family:var(--font-mono);color:${ec}">${ev.toFixed(3)}</td>`;
+      }).join("");
+      return `<tr>
+        <td style="font-weight:700">${p["会場名"]||"--"}</td>
+        <td style="font-size:12px;color:var(--text2)">${p["グループ"]||"--"}</td>
+        <td style="font-family:var(--font-mono);color:${ac};font-weight:700">${alpha.toFixed(3)}</td>
+        ${evCols}
+      </tr>`;
+    }).join("");
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー: ${e.message}</td></tr>`;
+  }
+}
+  
 loadDashboard();
 setInterval(()=>{
   if(document.getElementById("page-dashboard").classList.contains("active")) loadDashboard();
