@@ -330,21 +330,20 @@ select:focus{border-color:var(--cyan)}
 <!-- BACKTEST -->
 <div class="page" id="page-backtest">
 
-  <!-- 日付・会場指定 -->
+  <!-- 設定 -->
   <div class="card" style="margin-bottom:14px">
     <div class="card-title">バックテスト設定</div>
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
       <div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:4px">対象日付</div>
         <input type="date" id="bt-date"
-          style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-mono);outline:none"
-          value="">
+          style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-mono);outline:none">
       </div>
       <div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">会場</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">会場絞り込み</div>
         <select id="bt-venue"
           style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none">
-          <option value="ALL">全会場</option>
+          <option value="ALL">全会場（自動順番実行）</option>
           <option value="01#">桐生</option><option value="02#">戸田</option>
           <option value="03#">江戸川</option><option value="04#">平和島</option>
           <option value="05#">多摩川</option><option value="06#">浜名湖</option>
@@ -359,26 +358,78 @@ select:focus{border-color:var(--cyan)}
           <option value="23#">唐津</option><option value="24#">大村</option>
         </select>
       </div>
-      <div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">レース範囲</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <input type="number" id="bt-from" min="1" max="12" value="1"
-            style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;font-family:var(--font-mono);width:56px;outline:none">
-          <span style="color:var(--text2)">〜</span>
-          <input type="number" id="bt-to" min="1" max="12" value="12"
-            style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;font-family:var(--font-mono);width:56px;outline:none">
-          <span style="font-size:11px;color:var(--text2)">R</span>
-        </div>
-      </div>
-      <div style="margin-top:18px">
-        <button onclick="runBacktest()"
+      <div style="margin-top:18px;display:flex;gap:8px">
+        <button id="bt-run-btn" onclick="startAutoBacktest()"
           style="padding:8px 20px;background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(0,153,187,.1));border:1px solid rgba(0,212,255,.4);border-radius:7px;color:var(--cyan);font-family:var(--font-ja);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s">
-          ▶ バックテスト実行（GAS）
+          ▶ 自動バックテスト開始
+        </button>
+        <button id="bt-stop-btn" onclick="stopBacktest()" disabled
+          style="padding:8px 16px;background:transparent;border:1px solid rgba(255,68,85,.4);border-radius:7px;color:var(--red);font-family:var(--font-ja);font-size:13px;cursor:pointer;opacity:.4">
+          ■ 停止
         </button>
       </div>
     </div>
-    <div id="bt-status" style="margin-top:10px;font-size:12px;color:var(--text2)"></div>
+
+    <!-- 進捗バー -->
+    <div id="bt-progress-wrap" style="display:none">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:var(--text2)" id="bt-progress-label">準備中...</span>
+        <span style="font-family:var(--font-mono);font-size:12px;color:var(--cyan)" id="bt-progress-pct">0%</span>
+      </div>
+      <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+        <div id="bt-progress-bar" style="height:100%;background:var(--cyan);width:0%;transition:width .4s;border-radius:3px"></div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text2)" id="bt-eta"></div>
+    </div>
   </div>
+
+  <!-- リアルタイムログ -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">実行ログ（リアルタイム）</div>
+    <div id="bt-realtime-log"
+      style="height:200px;overflow-y:auto;background:var(--bg3);border-radius:8px;padding:10px;font-family:var(--font-mono);font-size:12px;color:var(--text2)">
+      待機中...
+    </div>
+  </div>
+
+  <!-- バックテスト結果ログ -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">バックテスト結果ログ
+      <button onclick="loadBacktestLog()" style="margin-left:10px;padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text2);font-size:11px;cursor:pointer">🔄 更新</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>実行日時</th><th>対象日</th><th>会場</th>
+          <th>総R</th><th>軸的中</th><th>軸的中率</th>
+          <th>旧α</th><th>新α</th><th>変化</th>
+        </tr></thead>
+        <tbody id="bt-log-body">
+          <tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text2)">読み込み中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MASTER_PARAMS現在値 -->
+  <div class="card">
+    <div class="card-title">現在のMASTER_PARAMS
+      <button onclick="loadBacktestMaster()" style="margin-left:10px;padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text2);font-size:11px;cursor:pointer">🔄 更新</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>会場</th><th>グループ</th><th>α値</th>
+          <th>1号艇EV</th><th>2号艇EV</th><th>3号艇EV</th>
+          <th>4号艇EV</th><th>5号艇EV</th><th>6号艇EV</th>
+        </tr></thead>
+        <tbody id="bt-master-body">
+          <tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text2)">読み込み中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
   <!-- BACKTEST_LOGの結果表示 -->
   <div class="card" style="margin-bottom:14px">
@@ -1057,46 +1108,221 @@ function renderMatchingTable(patterns) {
   }).join("");
 }
 
-// ━━━ バックテスト・調整 ━━━
+// ━━━ バックテスト 自動実行エンジン ━━━
+let btRunning  = false;
+let btStopFlag = false;
+
 (function initBacktestDate(){
-  // 今日の日付をデフォルト設定
   const d = new Date();
-  d.setDate(d.getDate() - 1); // デフォルトは昨日
+  d.setDate(d.getDate() - 1);
   document.getElementById("bt-date").value =
     d.getFullYear()+"-"+
     String(d.getMonth()+1).padStart(2,"0")+"-"+
     String(d.getDate()).padStart(2,"0");
 })();
 
-function runBacktest() {
+function stopBacktest() {
+  btStopFlag = true;
+  btLog("⏹ 停止リクエスト受付。現在の処理完了後に停止します...", "var(--amber)");
+}
+
+function btLog(msg, color="var(--text2)") {
+  const el = document.getElementById("bt-realtime-log");
+  const time = new Date().toLocaleTimeString("ja-JP",{hour12:false});
+  el.innerHTML += `<div style="color:${color}"><span style="color:var(--border)">[${time}]</span> ${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function btSetProgress(label, pct, eta="") {
+  document.getElementById("bt-progress-label").textContent = label;
+  document.getElementById("bt-progress-pct").textContent   = Math.round(pct)+"%";
+  document.getElementById("bt-progress-bar").style.width   = pct+"%";
+  document.getElementById("bt-eta").textContent            = eta;
+}
+
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+async function startAutoBacktest() {
+  if(btRunning){ showToast("実行中です"); return; }
+
   const dateVal = document.getElementById("bt-date").value;
-  const venue   = document.getElementById("bt-venue").value;
-  const from    = document.getElementById("bt-from").value;
-  const to      = document.getElementById("bt-to").value;
+  if(!dateVal){ showToast("❌ 日付を選択してください"); return; }
 
-  if(!dateVal){
-    showToast("❌ 日付を選択してください");
-    return;
+  const hd       = dateVal.replace(/-/g,""); // "20260416"
+  const venueFilter = document.getElementById("bt-venue").value;
+
+  btRunning  = true;
+  btStopFlag = false;
+
+  document.getElementById("bt-run-btn").disabled  = true;
+  document.getElementById("bt-stop-btn").disabled = false;
+  document.getElementById("bt-stop-btn").style.opacity = "1";
+  document.getElementById("bt-progress-wrap").style.display = "block";
+  document.getElementById("bt-realtime-log").innerHTML = "";
+  btLog(`🚀 バックテスト開始: ${dateVal}`, "var(--cyan)");
+
+  try {
+    // ① その日のEXECUTION_LOGから会場リストを取得
+    btLog("📋 対象会場を取得中...", "var(--text2)");
+    const logData = await gasGet("getLog");
+    if(logData.status !== "ok"){
+      btLog("❌ ログ取得失敗", "var(--red)");
+      return;
+    }
+
+    // 日付でフィルタして会場リストを抽出（順番・重複なし）
+    const todayLogs = logData.logs.filter(l => {
+      if(!l.date) return false;
+      const d = new Date(l.date);
+      if(isNaN(d.getTime())) return false;
+      const ds = d.getFullYear()+
+        String(d.getMonth()+1).padStart(2,"0")+
+        String(d.getDate()).padStart(2,"0");
+      return ds === hd;
+    });
+
+    // 会場IDでユニーク化（出現順を維持）
+    const venueOrder = [];
+    const seen = new Set();
+    todayLogs.forEach(l => {
+      if(l.venueId && !seen.has(l.venueId)){
+        seen.add(l.venueId);
+        venueOrder.push({ venueId: l.venueId, venueName: l.venueName||l.venueId });
+      }
+    });
+
+    // 会場フィルタ適用
+    const venues = venueFilter === "ALL"
+      ? venueOrder
+      : venueOrder.filter(v => v.venueId === venueFilter);
+
+    if(venues.length === 0){
+      btLog("⚠️ 対象会場がありません。日付・会場を確認してください。", "var(--amber)");
+      return;
+    }
+
+    btLog(`📍 対象会場: ${venues.length}会場（${venues.map(v=>v.venueName).join("、")}）`, "var(--cyan)");
+
+    const totalSteps = venues.length * 2; // 各会場 R1-6 + R7-12
+    let stepDone = 0;
+    const startTime = Date.now();
+
+    for(const venue of venues){
+      if(btStopFlag){
+        btLog("⏹ ユーザーにより停止されました", "var(--amber)");
+        break;
+      }
+
+      btLog(`\n🏁 ${venue.venueName}（${venue.venueId}）開始`, "var(--cyan)");
+
+      // R1〜R6
+      btLog(`  📊 R1〜R6 解析中...`, "var(--text2)");
+      btSetProgress(
+        `${venue.venueName} R1〜R6`,
+        (stepDone / totalSteps) * 100,
+        calcEta(startTime, stepDone, totalSteps)
+      );
+
+      const res1 = await gasPost({
+        action:       "runBacktestRange",
+        targetDate:   hd,
+        targetVenue:  venue.venueId,
+        raceFrom:     1,
+        raceTo:       6
+      });
+      stepDone++;
+
+      if(res1.status === "ok"){
+        btLog(
+          `  ✅ R1〜R6完了: ${res1.hits}/${res1.processed}的中` +
+          (res1.details ? " [" + res1.details.map(d =>
+            d.hit ? `<span style="color:var(--green)">R${d.raceNo}✓</span>`
+                  : `<span style="color:var(--red)">R${d.raceNo}✗</span>`
+          ).join(" ") + "]" : ""),
+          "var(--text)"
+        );
+      } else {
+        btLog(`  ❌ R1〜R6エラー: ${res1.message||"不明"}`, "var(--red)");
+      }
+
+      // R1-6とR7-12の間に間隔を置く（GAS側の処理完了待ち）
+      btLog(`  ⏳ 次のバッチまで35秒待機中...`, "var(--text2)");
+      await sleep(35000);
+
+      if(btStopFlag){ btLog("⏹ 停止", "var(--amber)"); break; }
+
+      // R7〜R12
+      btLog(`  📊 R7〜R12 解析中...`, "var(--text2)");
+      btSetProgress(
+        `${venue.venueName} R7〜R12`,
+        (stepDone / totalSteps) * 100,
+        calcEta(startTime, stepDone, totalSteps)
+      );
+
+      const res2 = await gasPost({
+        action:       "runBacktestRange",
+        targetDate:   hd,
+        targetVenue:  venue.venueId,
+        raceFrom:     7,
+        raceTo:       12
+      });
+      stepDone++;
+
+      if(res2.status === "ok"){
+        btLog(
+          `  ✅ R7〜R12完了: ${res2.hits}/${res2.processed}的中` +
+          (res2.details ? " [" + res2.details.map(d =>
+            d.hit ? `<span style="color:var(--green)">R${d.raceNo}✓</span>`
+                  : `<span style="color:var(--red)">R${d.raceNo}✗</span>`
+          ).join(" ") + "]" : ""),
+          "var(--text)"
+        );
+      } else {
+        btLog(`  ❌ R7〜R12エラー: ${res2.message||"不明"}`, "var(--red)");
+      }
+
+      btSetProgress(
+        `${venue.venueName} 完了`,
+        (stepDone / totalSteps) * 100,
+        calcEta(startTime, stepDone, totalSteps)
+      );
+
+      // 会場間インターバル（最後の会場はスキップ）
+      if(venues.indexOf(venue) < venues.length - 1 && !btStopFlag){
+        btLog(`  ⏳ 次の会場まで20秒待機中...`, "var(--text2)");
+        await sleep(20000);
+      }
+    }
+
+    if(!btStopFlag){
+      btSetProgress("完了！", 100, "");
+      btLog(`\n🎉 全バックテスト完了！ログを更新中...`, "var(--green)");
+      await sleep(2000);
+      await loadBacktestLog();
+      await loadBacktestMaster();
+      showToast("✅ バックテスト完了！α値・EV値を更新しました");
+    }
+
+  } catch(e) {
+    btLog(`❌ 予期しないエラー: ${e.message}`, "var(--red)");
+  } finally {
+    btRunning = false;
+    btStopFlag = false;
+    document.getElementById("bt-run-btn").disabled  = false;
+    document.getElementById("bt-stop-btn").disabled = true;
+    document.getElementById("bt-stop-btn").style.opacity = "0.4";
   }
+}
 
-  // GASのrunBacktestByVenueRangeをdoGetから呼ぶのはできないので
-  // ユーザーにGASで実行するよう案内 + パラメータをコピー
-  const hd = dateVal.replace(/-/g,"");
-  const gasFunc = venue === "ALL"
-    ? `runBacktestAndAdjust("${hd}")`
-    : `runBacktestByVenueRange("${hd}", "${venue}", ${from}, ${to})`;
-
-  document.getElementById("bt-status").innerHTML =
-    `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:var(--font-mono);font-size:12px">
-      <div style="color:var(--amber);margin-bottom:4px">⚡ GASエディタで以下の関数を実行してください：</div>
-      <div style="color:var(--cyan);user-select:all">${gasFunc}</div>
-      <div style="color:var(--text2);margin-top:6px;font-size:11px">
-        実行後「ログを更新」ボタンを押すと結果が表示されます
-      </div>
-    </div>`;
-
-  // ログを自動更新
-  setTimeout(loadBacktestLog, 3000);
+function calcEta(startTime, done, total) {
+  if(done === 0) return "";
+  const elapsed = (Date.now() - startTime) / 1000;
+  const perStep = elapsed / done;
+  const remaining = Math.round(perStep * (total - done));
+  if(remaining <= 0) return "まもなく完了";
+  const m = Math.floor(remaining / 60);
+  const s = remaining % 60;
+  return `残り約 ${m > 0 ? m+"分" : ""}${s}秒`;
 }
 
 async function loadBacktestLog() {
@@ -1107,27 +1333,26 @@ async function loadBacktestLog() {
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text2)">バックテスト未実行</td></tr>';
       return;
     }
-    tbody.innerHTML = [...data.logs].reverse().slice(0, 20).map(r => {
-      const delta = ((r.newAlpha||0) - (r.oldAlpha||0));
-      const dc    = delta > 0 ? "var(--green)" : delta < 0 ? "var(--red)" : "var(--text2)";
-      const ac    = (r.newAlpha||0) >= 0.80 ? "var(--green)"
-                  : (r.newAlpha||0) >= 0.65 ? "var(--cyan)"
-                  : (r.newAlpha||0) >= 0.55 ? "var(--amber)" : "var(--red)";
-      const hitRate = r.axisHitRate||r["軸的中率"]||"--";
+    tbody.innerHTML = [...data.logs].reverse().slice(0,30).map(r => {
+      const oldA  = parseFloat(r.oldAlpha) || 0;
+      const newA  = parseFloat(r.newAlpha) || 0;
+      const delta = newA - oldA;
+      const dc    = delta > 0.001 ? "var(--green)" : delta < -0.001 ? "var(--red)" : "var(--text2)";
+      const ac    = newA >= 0.80 ? "var(--green)" : newA >= 0.65 ? "var(--cyan)" : newA >= 0.55 ? "var(--amber)" : "var(--red)";
       return `<tr>
-        <td style="font-family:var(--font-mono);font-size:11px;color:var(--text2)">${r.execDate||r["実行日時"]||"--"}</td>
-        <td style="font-family:var(--font-mono);color:var(--text2)">${r.targetDate||r["対象日"]||"--"}</td>
-        <td style="font-weight:700">${r.venue||r["会場"]||"--"}</td>
-        <td style="font-family:var(--font-mono)">${r.total||r["総レース"]||"--"}</td>
-        <td style="font-family:var(--font-mono)">${r.axleHits||r["軸的中"]||"--"}</td>
-        <td style="font-family:var(--font-mono);font-weight:700;color:var(--cyan)">${hitRate}</td>
-        <td style="font-family:var(--font-mono);color:var(--text2)">${(r.oldAlpha||r["旧α"]||"--")}</td>
-        <td style="font-family:var(--font-mono);color:${ac};font-weight:700">${(r.newAlpha||r["新α"]||"--")}</td>
-        <td style="font-family:var(--font-mono);color:${dc};font-weight:700">${delta>0?"+":""}${delta.toFixed ? delta.toFixed(3) : "--"}</td>
+        <td style="font-family:var(--font-mono);font-size:11px;color:var(--text2)">${r.execDate||"--"}</td>
+        <td style="font-family:var(--font-mono);color:var(--text2)">${r.targetDate||"--"}</td>
+        <td style="font-weight:700">${r.venue||"--"}</td>
+        <td style="font-family:var(--font-mono)">${r.total||"--"}</td>
+        <td style="font-family:var(--font-mono)">${r.axleHits||"--"}</td>
+        <td style="font-family:var(--font-mono);font-weight:700;color:var(--cyan)">${r.axisHitRate||"--"}</td>
+        <td style="font-family:var(--font-mono);color:var(--text2)">${oldA.toFixed(3)}</td>
+        <td style="font-family:var(--font-mono);color:${ac};font-weight:700">${newA.toFixed(3)}</td>
+        <td style="font-family:var(--font-mono);color:${dc};font-weight:700">${delta>0?"+":""}${delta.toFixed(3)}</td>
       </tr>`;
     }).join("");
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー</td></tr>`;
   }
 }
 
@@ -1141,7 +1366,7 @@ async function loadBacktestMaster() {
     }
     tbody.innerHTML = data.data.map(p => {
       const alpha = parseFloat(p["α補正値"]) || 0;
-      const ac = alpha>=0.85?"var(--green)":alpha>=0.70?"var(--cyan)":alpha>=0.55?"var(--amber)":"var(--red)";
+      const ac    = alpha>=0.85?"var(--green)":alpha>=0.70?"var(--cyan)":alpha>=0.55?"var(--amber)":"var(--red)";
       const evCols = [1,2,3,4,5,6].map(n => {
         const ev = parseFloat(p[`${n}号艇EV`]) || 1.0;
         const ec = ev>=1.2?"var(--green)":ev>=1.0?"var(--text)":ev>=0.8?"var(--amber)":"var(--red)";
@@ -1155,14 +1380,6 @@ async function loadBacktestMaster() {
       </tr>`;
     }).join("");
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー</td></tr>`;
   }
 }
-  
-loadDashboard();
-setInterval(()=>{
-  if(document.getElementById("page-dashboard").classList.contains("active")) loadDashboard();
-},5*60*1000);
-</script>
-</body>
-</html>
