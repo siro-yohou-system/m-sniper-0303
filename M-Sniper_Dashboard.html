@@ -1170,24 +1170,34 @@ async function startAutoBacktest(){
     } else if(sourceMode==="schedule"){
       // ── 推奨：RACE_SCHEDULEから開催会場を自動判定
       btLog("📅 RACE_SCHEDULEから開催会場を取得中...", "var(--text2)");
-      const schedData = await gasGet("getVenuesByDate_" + hd);
-      // ↑ gasGetはactionパラメータをそのまま使うので
-      //   GAS側でパースできるよう別途呼び方を工夫する
-      // → gasGetの代わりに専用関数で呼ぶ
-      const schRes = await gasGetWithParam("getVenuesByDate", hd);
 
-      if(schRes && schRes.status==="ok" && schRes.venues && schRes.venues.length>0){
-        venues = schRes.venues; // [{venueId:"01#", venueName:"桐生"}, ...]
-        btLog(`✅ 開催会場を取得: ${venues.length}会場（${venues.map(v=>v.venueName).join("、")}）`, "var(--cyan)");
+      // GASのgetVenuesByDateを呼ぶ（paramで日付を渡す）
+      let schRes;
+      try {
+        schRes = await gasGetWithParam("getVenuesByDate", hd);
+      } catch(e) {
+        schRes = null;
+      }
+
+      if(schRes && schRes.status==="ok" && schRes.venues && schRes.venues.length > 0){
+        venues = schRes.venues;
+        btLog(`✅ RACE_SCHEDULEから取得: ${venues.length}会場（${venues.map(v=>v.venueName).join("、")}）`, "var(--cyan)");
       } else {
-        btLog("⚠️ RACE_SCHEDULEにデータなし。直接boatrace.jpから取得します...", "var(--amber)");
-        // フォールバック: GASのfetchVenueScheduleForDateを呼ぶ
-        const fbRes = await gasGetWithParam("fetchVenuesByDate", hd);
-        if(fbRes && fbRes.status==="ok" && fbRes.venues && fbRes.venues.length>0){
+        // フォールバック: boatrace.jpのトップページから直接取得
+        btLog("⚠️ RACE_SCHEDULEにデータなし → boatrace.jpから直接取得中...", "var(--amber)");
+        let fbRes;
+        try {
+          fbRes = await gasGetWithParam("fetchVenuesByDate", hd);
+        } catch(e) {
+          fbRes = null;
+        }
+
+        if(fbRes && fbRes.status==="ok" && fbRes.venues && fbRes.venues.length > 0){
           venues = fbRes.venues;
           btLog(`✅ boatrace.jpから取得: ${venues.length}会場（${venues.map(v=>v.venueName).join("、")}）`, "var(--cyan)");
         } else {
-          btLog("❌ 開催会場の取得に失敗しました。会場を個別指定してください。", "var(--red)");
+          btLog("❌ 開催会場の取得に失敗しました。", "var(--red)");
+          btLog("💡 会場絞り込みで個別指定して実行してください。", "var(--amber)");
           return;
         }
       }
