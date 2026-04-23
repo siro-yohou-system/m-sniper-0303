@@ -2,8 +2,11 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- キャッシュ無効化 -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>M-Sniper 0303 | Dashboard</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -452,11 +455,6 @@ setInterval(() => {
 document.getElementById("clock").textContent =
   new Date().toLocaleTimeString("ja-JP",{hour12:false});
 
-// ── [修正1] ページ読み込み完了後にダッシュボードを初期ロード
-document.addEventListener("DOMContentLoaded", () => {
-  loadDashboard();
-});
-
 // ── ページ切り替え
 function showPage(id, btn) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
@@ -570,11 +568,12 @@ function showToast(msg){
 // ━━━ DASHBOARD ━━━
 async function loadDashboard() {
   try {
-    const [logData, schedData, setData] = await Promise.all([
-      gasGet("getLog"),
-      gasGet("getSchedule"),
-      gasGet("getSettings"),
-    ]);
+    // [修正] Promise.allの並列実行をやめて順次実行に変更
+    // GASのJSONPは同時リクエストでコールバック競合が起きやすいため
+    const logData   = await gasGet("getLog");
+    const schedData = await gasGet("getSchedule");
+    const setData   = await gasGet("getSettings");
+
     if(logData.status==="ok")   renderDashboard(logData.logs);
     if(schedData.status==="ok") renderSchedule(schedData.schedules);
     if(setData.status==="ok")   document.getElementById("m-threshold").textContent=(setData.settings.notify_threshold||70)+"%";
@@ -1297,6 +1296,11 @@ async function loadBacktestMaster(){
     tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー</td></tr>`;
   }
 }
+
+// ── 初期ロード（確実に実行）
+window.addEventListener("load", () => { loadDashboard(); });
 </script>
+<!-- Chart.jsはスクリプト実行後にロード（DOMブロック防止） -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 </body>
 </html>
