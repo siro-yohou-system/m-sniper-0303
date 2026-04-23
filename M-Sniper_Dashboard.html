@@ -1063,8 +1063,6 @@ function btLog(msg, color="var(--text2)", id=null){
   el.innerHTML+=`<div ${divId} style="color:${color}"><span style="color:var(--border)">[${time}]</span> ${msg}</div>`;
   el.scrollTop=el.scrollHeight;
 }
-
-// ── 既存ログ行を更新（IDで指定）
 function btLogUpdate(id, msg, color="var(--text2)"){
   const el=document.getElementById(id);
   if(!el) return;
@@ -1074,36 +1072,19 @@ function btLogUpdate(id, msg, color="var(--text2)"){
   document.getElementById("bt-realtime-log").scrollTop=99999;
 }
 
-// ── 進捗バー更新（経過時間も表示）
 let btStartTime=0;
 function btSetProgress(label, pct, eta=""){
   document.getElementById("bt-progress-label").textContent=label;
   document.getElementById("bt-progress-pct").textContent=Math.round(pct)+"%";
   document.getElementById("bt-progress-bar").style.width=pct+"%";
   const elapsed = btStartTime>0 ? Math.round((Date.now()-btStartTime)/1000) : 0;
-  const em = Math.floor(elapsed/60), es = elapsed%60;
+  const em=Math.floor(elapsed/60), es=elapsed%60;
   const elapsedStr = elapsed>0 ? `経過: ${em>0?em+"分":""}${es}秒` : "";
   document.getElementById("bt-eta").textContent=
     [eta, elapsedStr].filter(Boolean).join("  |  ");
 }
 
-// ── カウントダウン付きsleep（ログIDを指定することで行を上書き更新）
-async function sleepWithCountdown(totalSec, logId){
-  const intervalMs=1000;
-  for(let remaining=totalSec; remaining>0; remaining--){
-    if(btStopFlag) break;
-    const bar="█".repeat(Math.round((totalSec-remaining)/totalSec*12))+"░".repeat(Math.round(remaining/totalSec*12));
-    btLogUpdate(logId,
-      `  ⏳ 待機中 [${bar}] <span style="color:var(--cyan);font-weight:700">${remaining}秒</span>`,
-      "var(--text2)"
-    );
-    await new Promise(r=>setTimeout(r,intervalMs));
-  }
-}
-
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
-// ── GAS処理中アニメーション（gasPostの間に表示）
+// ── スピナー（1行上書き更新型）
 let btSpinTimer=null;
 function btStartSpinner(logId, label){
   const frames=["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"];
@@ -1119,6 +1100,22 @@ function btStartSpinner(logId, label){
 }
 function btStopSpinner(){ if(btSpinTimer){ clearInterval(btSpinTimer); btSpinTimer=null; } }
 
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function calcEta(startTime, done, total){
+  if(done===0) return "算出中...";
+  const elapsed=(Date.now()-startTime)/1000;
+  const remaining=Math.round(elapsed/done*(total-done));
+  if(remaining<=0) return "まもなく完了";
+  const m=Math.floor(remaining/60), s=remaining%60;
+  return `残り約 ${m>0?m+"分":""}${s}秒`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ▼ メインエンジン（1レース単位処理版）
+//   GASの180秒制限を完全回避
+//   1レース = 1 gasPost（目安5〜15秒）
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 async function startAutoBacktest(){
   if(btRunning){ showToast("実行中です"); return; }
   const dateVal=document.getElementById("bt-date").value;
@@ -1137,15 +1134,14 @@ async function startAutoBacktest(){
   btLog(`🚀 バックテスト開始: ${dateVal}`, "var(--cyan)");
 
   try {
+    // 会場リストを決定
     let venues=[];
-
     if(venueFilter !== "ALL"){
-      const logData = await gasGet("getMasterParams");
-      const found   = (logData.data||[]).find(p=>String(p["会場ID"])===venueFilter);
-      venues = [{ venueId: venueFilter, venueName: found ? found["会場名"] : venueFilter }];
-
-    } else if(sourceMode === "all24"){
-      const all24 = [
+      const md=await gasGet("getMasterParams");
+      const found=(md.data||[]).find(p=>String(p["会場ID"])===venueFilter);
+      venues=[{venueId:venueFilter, venueName:found?found["会場名"]:venueFilter}];
+    } else if(sourceMode==="all24"){
+      venues=[
         {venueId:"01#",venueName:"桐生"},{venueId:"02#",venueName:"戸田"},
         {venueId:"03#",venueName:"江戸川"},{venueId:"04#",venueName:"平和島"},
         {venueId:"05#",venueName:"多摩川"},{venueId:"06#",venueName:"浜名湖"},
@@ -1159,23 +1155,18 @@ async function startAutoBacktest(){
         {venueId:"21#",venueName:"芦屋"},{venueId:"22#",venueName:"福岡"},
         {venueId:"23#",venueName:"唐津"},{venueId:"24#",venueName:"大村"},
       ];
-      btLog("📋 全24会場を直接取得モードで実行します", "var(--text2)");
-      btLog("⚠️ 開催なし会場はGAS側が自動スキップします", "var(--text2)");
-      venues = all24;
-
+      btLog("📋 全24会場を直接取得モード", "var(--text2)");
     } else {
       btLog("📋 EXECUTION_LOGから対象会場を取得中...", "var(--text2)");
-      const logData = await gasGet("getLog");
-      if(logData.status!=="ok"){ btLog("❌ ログ取得失敗", "var(--red)"); return; }
-      const todayLogs = logData.logs.filter(l=>{
-        if(!l.date) return false;
-        const d=new Date(l.date);
-        if(isNaN(d.getTime())) return false;
-        const ds=d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
-        return ds===hd;
-      });
+      const logData=await gasGet("getLog");
+      if(logData.status!=="ok"){ btLog("❌ ログ取得失敗","var(--red)"); return; }
       const seen=new Set();
-      todayLogs.forEach(l=>{
+      logData.logs.forEach(l=>{
+        if(!l.date) return;
+        const d=new Date(l.date);
+        if(isNaN(d.getTime())) return;
+        const ds=d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
+        if(ds!==hd) return;
         if(l.venueId&&!seen.has(l.venueId)){
           seen.add(l.venueId);
           venues.push({venueId:l.venueId,venueName:l.venueName||l.venueId});
@@ -1183,134 +1174,152 @@ async function startAutoBacktest(){
       });
     }
 
-    if(venues.length===0){ btLog("⚠️ 対象会場がありません", "var(--amber)"); return; }
+    if(venues.length===0){ btLog("⚠️ 対象会場がありません","var(--amber)"); return; }
 
-    const totalSteps=venues.length*2;
-    let stepDone=0;
+    // 全レース数を計算（12R × 会場数）
+    const RACE_COUNT=12;
+    const totalRaces=venues.length * RACE_COUNT;
+    let racesDone=0;
 
-    // 全体の見通しを先に表示
-    btLog(`📍 対象: ${venues.length}会場 × 2バッチ = ${totalSteps}ステップ`, "var(--cyan)");
-    btLog(`📌 ${venues.map((v,i)=>`${i+1}.${v.venueName}`).join("  ")}`, "var(--text2)");
-    btLog(`⏱ 1会場あたり約2分（GAS処理60秒×2＋待機55秒）の見込み`, "var(--text2)");
+    btLog(`📍 対象: ${venues.length}会場 × 12R = 最大${totalRaces}レース`, "var(--cyan)");
+    btLog(`⚡ 1レース単位で処理（GASタイムアウト回避モード）`, "var(--cyan)");
     btLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, "var(--border)");
 
     for(const venue of venues){
-      if(btStopFlag){ btLog("⏹ 停止", "var(--amber)"); break; }
+      if(btStopFlag){ btLog("⏹ 停止","var(--amber)"); break; }
 
-      const venueIdx = venues.indexOf(venue)+1;
-      btLog(``, "var(--border)"); // 空行
-      btLog(`【${venueIdx}/${venues.length}】🏁 ${venue.venueName}（${venue.venueId}）`, "var(--cyan)");
-      btSetProgress(`[${venueIdx}/${venues.length}] ${venue.venueName} — R1〜R6`, stepDone/totalSteps*100, calcEta(btStartTime,stepDone,totalSteps));
+      const vi=venues.indexOf(venue)+1;
+      btLog(``, "var(--border)");
+      btLog(`【${vi}/${venues.length}】🏁 ${venue.venueName}（${venue.venueId}）`, "var(--cyan)");
 
-      // ── R1〜R6: スピナー付きで送信
-      const spin1Id="bt-spin-"+Date.now();
-      btLog(`  ⠋ R1〜R6 GAS送信中...`, "var(--text2)", spin1Id);
-      btStartSpinner(spin1Id, "R1〜R6");
+      // この会場の集計バッファ
+      let venueHits=0, venueTotal=0;
+      const venueCounts=[0,0,0,0,0,0,0]; // index1〜6が各艇の1着回数
 
-      let res1;
-      try {
-        res1 = await gasPost({
-          action:"runBacktestRange", targetDate:hd,
-          targetVenue:venue.venueId, raceFrom:1, raceTo:6
-        });
-      } finally {
-        btStopSpinner();
-      }
-      stepDone++;
+      // 1レースずつ順番に処理
+      for(let raceNo=1; raceNo<=RACE_COUNT; raceNo++){
+        if(btStopFlag) break;
 
-      if(res1 && res1.status==="ok"){
-        if(res1.processed===0){
-          btLogUpdate(spin1Id, `  ⚪ R1〜R6 開催なし（スキップ）`, "var(--text2)");
+        btSetProgress(
+          `[${vi}/${venues.length}] ${venue.venueName} R${raceNo}`,
+          racesDone/totalRaces*100,
+          calcEta(btStartTime, racesDone, totalRaces)
+        );
+
+        // スピナー付きでGAS呼び出し
+        const spinId=`bt-r-${venue.venueId}-${raceNo}`;
+        btLog(`  ⠋ R${raceNo} 処理中...`, "var(--text2)", spinId);
+        btStartSpinner(spinId, `R${raceNo}`);
+
+        let res;
+        try {
+          res = await gasPost({
+            action:       "runBacktestSingleRace",
+            targetDate:   hd,
+            targetVenue:  venue.venueId,
+            raceNo:       raceNo,
+          });
+        } finally {
+          btStopSpinner();
+        }
+
+        racesDone++;
+
+        // 結果を表示・集計
+        if(!res || res.status==="error"){
+          btLogUpdate(spinId, `  ❌ R${raceNo} エラー: ${res&&res.message||"不明"}`, "var(--red)");
+        } else if(res.skipped){
+          btLogUpdate(spinId, `  ⚪ R${raceNo} スキップ（${res.reason||"データなし"}）`, "var(--text2)");
         } else {
-          const detailStr = (res1.details||[]).map(d=>
-            d.status==="完了"
-              ? (d.hit
-                  ? `<span style="color:var(--green)">R${d.raceNo}✓(${d.predicted}→${d.actual})</span>`
-                  : `<span style="color:var(--red)">R${d.raceNo}✗(予${d.predicted}/実${d.actual})</span>`)
-              : `<span style="color:var(--text2)">R${d.raceNo}:${d.status}</span>`
-          ).join(" ");
-          btLogUpdate(spin1Id,
-            `  ✅ R1〜R6完了: <span style="color:var(--cyan);font-weight:700">${res1.hits}/${res1.processed}的中</span>  ${detailStr}`,
-            "var(--text)"
+          venueTotal++;
+          if(res.hit) venueHits++;
+          if(res.courseCounts){
+            for(let g=1;g<=6;g++) venueCounts[g]+=(res.courseCounts[g]||0);
+          }
+
+          const hitMark = res.hit
+            ? `<span style="color:var(--green)">✓的中</span>`
+            : `<span style="color:var(--red)">✗外れ</span>`;
+          const axisStr = `予<span style="color:var(--cyan)">${res.predicted}</span>号艇 / 実<span style="color:var(--amber)">${res.actual}</span>号艇`;
+          btLogUpdate(spinId,
+            `  R${String(raceNo).padStart(2)} ${hitMark} ${axisStr}  スコア:${res.score}`,
+            res.hit ? "var(--text)" : "var(--text2)"
+          );
+        }
+
+        // レース間インターバル（boatrace.jpへの負荷軽減）
+        if(raceNo < RACE_COUNT && !btStopFlag) await sleep(1500);
+      }
+
+      // この会場の集計を表示
+      if(venueTotal>0){
+        const rate=Math.round(venueHits/venueTotal*100);
+        const rateCol=rate>=50?"var(--green)":rate>=30?"var(--amber)":"var(--red)";
+        btLog(
+          `  📊 ${venue.venueName} 小計: <span style="color:${rateCol};font-weight:700">${venueHits}/${venueTotal}的中 (${rate}%)</span>`,
+          "var(--text)"
+        );
+
+        // α・EV値の一括更新をGASに依頼
+        const alphaId=`bt-alpha-${venue.venueId}`;
+        btLog(`  🔄 α値・EV値を更新中...`, "var(--text2)", alphaId);
+        btStartSpinner(alphaId, "α更新");
+        let alphaRes;
+        try {
+          alphaRes = await gasPost({
+            action:       "applyAlphaFromBatch",
+            targetDate:   hd,
+            targetVenue:  venue.venueId,
+            hits:         venueHits,
+            total:        venueTotal,
+            courseCounts: venueCounts,
+          });
+        } finally {
+          btStopSpinner();
+        }
+
+        if(alphaRes && alphaRes.status==="ok"){
+          btLogUpdate(alphaId,
+            `  ✅ α更新完了: ${alphaRes.message||""}`,
+            "var(--green)"
+          );
+        } else {
+          btLogUpdate(alphaId,
+            `  ⚠️ α更新: ${alphaRes&&alphaRes.message||"サンプル不足のためスキップ"}`,
+            "var(--amber)"
           );
         }
       } else {
-        btLogUpdate(spin1Id, `  ❌ R1〜R6エラー: ${res1&&res1.message||"不明"}`, "var(--red)");
+        btLog(`  ⚪ ${venue.venueName}: 有効データなし（開催なし）`, "var(--text2)");
       }
 
-      // ── 35秒カウントダウン待機
-      if(!btStopFlag){
-        const wait1Id="bt-wait1-"+Date.now();
-        btLog(`  ⏳ 待機中...`, "var(--text2)", wait1Id);
-        await sleepWithCountdown(35, wait1Id);
-        btLogUpdate(wait1Id, `  ✔ 待機完了`, "var(--border)");
-      }
-      if(btStopFlag){ btLog("⏹ 停止", "var(--amber)"); break; }
+      btSetProgress(
+        `[${vi}/${venues.length}] ${venue.venueName} 完了`,
+        racesDone/totalRaces*100,
+        calcEta(btStartTime, racesDone, totalRaces)
+      );
 
-      // ── R7〜R12: スピナー付きで送信
-      btSetProgress(`[${venueIdx}/${venues.length}] ${venue.venueName} — R7〜R12`, stepDone/totalSteps*100, calcEta(btStartTime,stepDone,totalSteps));
-      const spin2Id="bt-spin2-"+Date.now();
-      btLog(`  ⠋ R7〜R12 GAS送信中...`, "var(--text2)", spin2Id);
-      btStartSpinner(spin2Id, "R7〜R12");
-
-      let res2;
-      try {
-        res2 = await gasPost({
-          action:"runBacktestRange", targetDate:hd,
-          targetVenue:venue.venueId, raceFrom:7, raceTo:12
-        });
-      } finally {
-        btStopSpinner();
-      }
-      stepDone++;
-
-      if(res2 && res2.status==="ok"){
-        if(res2.processed===0){
-          btLogUpdate(spin2Id, `  ⚪ R7〜R12 開催なし（スキップ）`, "var(--text2)");
-        } else {
-          const detailStr = (res2.details||[]).map(d=>
-            d.status==="完了"
-              ? (d.hit
-                  ? `<span style="color:var(--green)">R${d.raceNo}✓(${d.predicted}→${d.actual})</span>`
-                  : `<span style="color:var(--red)">R${d.raceNo}✗(予${d.predicted}/実${d.actual})</span>`)
-              : `<span style="color:var(--text2)">R${d.raceNo}:${d.status}</span>`
-          ).join(" ");
-          btLogUpdate(spin2Id,
-            `  ✅ R7〜R12完了: <span style="color:var(--cyan);font-weight:700">${res2.hits}/${res2.processed}的中</span>  ${detailStr}`,
-            "var(--text)"
-          );
-        }
-      } else {
-        btLogUpdate(spin2Id, `  ❌ R7〜R12エラー: ${res2&&res2.message||"不明"}`, "var(--red)");
-      }
-
-      btSetProgress(`[${venueIdx}/${venues.length}] ${venue.venueName} 完了`, stepDone/totalSteps*100, calcEta(btStartTime,stepDone,totalSteps));
-
-      // ── 会場間20秒カウントダウン（最後の会場はスキップ）
+      // 会場間インターバル
       if(venues.indexOf(venue)<venues.length-1 && !btStopFlag){
-        const wait2Id="bt-wait2-"+Date.now();
-        btLog(`  ⏳ 次の会場まで待機...`, "var(--text2)", wait2Id);
-        await sleepWithCountdown(20, wait2Id);
-        btLogUpdate(wait2Id, `  ✔ 待機完了`, "var(--border)");
+        await sleep(2000);
       }
     }
 
     if(!btStopFlag){
-      btSetProgress("完了！", 100, "");
+      btSetProgress("完了！",100,"");
       const totalSec=Math.round((Date.now()-btStartTime)/1000);
-      const tm=Math.floor(totalSec/60), ts=totalSec%60;
+      const tm=Math.floor(totalSec/60),ts=totalSec%60;
       btLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, "var(--border)");
       btLog(`🎉 全バックテスト完了！ 総処理時間: ${tm>0?tm+"分":""}${ts}秒`, "var(--green)");
-      btLog(`📊 ログ・MASTER_PARAMSを更新中...`, "var(--text2)");
-      await sleep(1500);
+      await sleep(1000);
       await loadBacktestLog();
       await loadBacktestMaster();
       showToast("✅ バックテスト完了！");
     }
 
-  } catch(e) {
+  } catch(e){
     btStopSpinner();
-    btLog(`❌ エラー: ${e.message}`, "var(--red)");
+    btLog(`❌ 予期しないエラー: ${e.message}`, "var(--red)");
     btLog(`💡 GASエディタ → 実行 → 実行数 でログを確認してください`, "var(--amber)");
   } finally {
     btStopSpinner();
@@ -1319,15 +1328,6 @@ async function startAutoBacktest(){
     document.getElementById("bt-stop-btn").disabled=true;
     document.getElementById("bt-stop-btn").style.opacity="0.4";
   }
-}
-
-function calcEta(startTime, done, total){
-  if(done===0) return "算出中...";
-  const elapsed=(Date.now()-startTime)/1000;
-  const remaining=Math.round(elapsed/done*(total-done));
-  if(remaining<=0) return "まもなく完了";
-  const m=Math.floor(remaining/60), s=remaining%60;
-  return `残り約 ${m>0?m+"分":""}${s}秒`;
 }
 
 async function loadBacktestLog(){
