@@ -105,7 +105,7 @@ select:focus{border-color:var(--cyan)}
   <header class="header">
     <div class="header-left">
       <div class="logo">M-SNIPER <span>0303</span></div>
-      <div class="ver">Ver 5.03 AUTO</div>
+      <div class="ver">Ver 5.04 AUTO</div>
     </div>
     <div class="header-right">
       <div class="status-dot" title="システム稼働中"></div>
@@ -125,7 +125,7 @@ select:focus{border-color:var(--cyan)}
 
   <div class="alert-banner" id="alertBanner"></div>
 
-  <!-- DASHBOARD -->
+  <!-- ══════════════════════════════════════ DASHBOARD ══ -->
   <div class="page active" id="page-dashboard">
     <div class="metrics-grid">
       <div class="metric cyan"><div class="metric-label">本日の解析レース</div><div class="metric-value" id="m-analyzed">--</div><div class="metric-sub">通知済 <span id="m-notified">--</span>R</div></div>
@@ -144,7 +144,7 @@ select:focus{border-color:var(--cyan)}
     </div>
   </div>
 
-  <!-- ANALYSIS LOG -->
+  <!-- ══════════════════════════════════════ ANALYSIS LOG ══ -->
   <div class="page" id="page-analysis">
     <div class="card">
       <div class="card-title">解析ログ（直近30件）</div>
@@ -157,7 +157,7 @@ select:focus{border-color:var(--cyan)}
     </div>
   </div>
 
-  <!-- VENUES -->
+  <!-- ══════════════════════════════════════ VENUES ══ -->
   <div class="page" id="page-venues">
     <div class="card">
       <div class="card-title">会場別成績・α値</div>
@@ -165,9 +165,8 @@ select:focus{border-color:var(--cyan)}
     </div>
   </div>
 
-  <!-- MATCHING -->
+  <!-- ══════════════════════════════════════ MATCHING ══ -->
   <div class="page" id="page-matching">
-    <!-- サマリーカード -->
     <div class="metrics-grid" style="margin-bottom:14px">
       <div class="metric cyan"><div class="metric-label">総解析レース</div><div class="metric-value" id="mt-total">--</div><div class="metric-sub">件</div></div>
       <div class="metric green"><div class="metric-label">的中率</div><div class="metric-value" id="mt-hitrate">--%</div><div class="metric-sub" id="mt-hits">-- / --</div></div>
@@ -175,16 +174,12 @@ select:focus{border-color:var(--cyan)}
       <div class="metric red"><div class="metric-label">軸外れ率</div><div class="metric-value" id="mt-axismiss">--%</div><div class="metric-sub">不的中の内訳</div></div>
       <div class="metric purple"><div class="metric-label">紐外れ率</div><div class="metric-value" id="mt-himomiss">--%</div><div class="metric-sub">不的中の内訳</div></div>
     </div>
-
-    <!-- 外れ要因グラフ -->
     <div class="card" style="margin-bottom:14px">
       <div class="card-title">外れ要因分析（② Miss Pattern）</div>
       <div id="miss-chart-wrap" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
         <div class="loading">データ取得中</div>
       </div>
     </div>
-
-    <!-- 気象×的中率マトリックス -->
     <div class="card" style="margin-bottom:14px">
       <div class="card-title">気象条件別的中率（① Weather Matrix）</div>
       <div class="table-wrap">
@@ -200,8 +195,6 @@ select:focus{border-color:var(--cyan)}
         </table>
       </div>
     </div>
-
-    <!-- 照合モード：直近レース詳細 -->
     <div class="card">
       <div class="card-title">照合モード（④ 予想 vs 結果）</div>
       <div class="table-wrap">
@@ -218,7 +211,7 @@ select:focus{border-color:var(--cyan)}
     </div>
   </div>
 
-  <!-- CHART -->
+  <!-- ══════════════════════════════════════ CHART ══ -->
   <div class="page" id="page-chart">
     <div class="card" style="margin-bottom:14px">
       <div class="card-title">累計収支推移</div>
@@ -239,7 +232,7 @@ select:focus{border-color:var(--cyan)}
     </div>
   </div>
 
-  <!-- SETTINGS -->
+  <!-- ══════════════════════════════════════ SETTINGS ══ -->
   <div class="page" id="page-settings">
     <div class="settings-grid">
       <div class="setting-group">
@@ -327,157 +320,131 @@ select:focus{border-color:var(--cyan)}
     <button class="btn-save" onclick="saveSettings()">⚡ 設定を保存してGASに反映</button>
   </div>
 
-<!-- BACKTEST -->
-<div class="page" id="page-backtest">
+  <!-- ══════════════════════════════════════ BACKTEST ══
+       [修正A] 二重テーブル削除・閉じタグ修正
+  ══════════════════════════════════════════════════════ -->
+  <div class="page" id="page-backtest">
 
-  <!-- 設定 -->
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-title">バックテスト設定</div>
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-      <div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">対象日付</div>
-        <input type="date" id="bt-date"
-          style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-mono);outline:none">
+    <!-- 設定パネル -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">バックテスト設定</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">対象日付</div>
+          <input type="date" id="bt-date"
+            style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-mono);outline:none">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">会場絞り込み</div>
+          <select id="bt-venue"
+            style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none">
+            <option value="ALL">全会場（EXECUTION_LOGの順）</option>
+            <option value="01#">桐生</option><option value="02#">戸田</option>
+            <option value="03#">江戸川</option><option value="04#">平和島</option>
+            <option value="05#">多摩川</option><option value="06#">浜名湖</option>
+            <option value="07#">蒲郡</option><option value="08#">常滑</option>
+            <option value="09#">津</option><option value="10#">三国</option>
+            <option value="11#">びわこ</option><option value="12#">住之江</option>
+            <option value="13#">尼崎</option><option value="14#">鳴門</option>
+            <option value="15#">丸亀</option><option value="16#">児島</option>
+            <option value="17#">宮島</option><option value="18#">徳山</option>
+            <option value="19#">下関</option><option value="20#">若松</option>
+            <option value="21#">芦屋</option><option value="22#">福岡</option>
+            <option value="23#">唐津</option><option value="24#">大村</option>
+          </select>
+        </div>
+        <!-- [修正D] 会場フィルタ「全会場」時の会場ソース選択 -->
+        <div id="bt-source-wrap">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">全会場モード時の取得元</div>
+          <select id="bt-source"
+            style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none">
+            <option value="log">EXECUTION_LOGの会場</option>
+            <option value="all24">全24会場を直接取得</option>
+          </select>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:8px">
+          <button id="bt-run-btn" onclick="startAutoBacktest()"
+            style="padding:8px 20px;background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(0,153,187,.1));border:1px solid rgba(0,212,255,.4);border-radius:7px;color:var(--cyan);font-family:var(--font-ja);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s">
+            ▶ 自動バックテスト開始
+          </button>
+          <button id="bt-stop-btn" onclick="stopBacktest()" disabled
+            style="padding:8px 16px;background:transparent;border:1px solid rgba(255,68,85,.4);border-radius:7px;color:var(--red);font-family:var(--font-ja);font-size:13px;cursor:pointer;opacity:.4">
+            ■ 停止
+          </button>
+        </div>
       </div>
-      <div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">会場絞り込み</div>
-        <select id="bt-venue"
-          style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none">
-          <option value="ALL">全会場（自動順番実行）</option>
-          <option value="01#">桐生</option><option value="02#">戸田</option>
-          <option value="03#">江戸川</option><option value="04#">平和島</option>
-          <option value="05#">多摩川</option><option value="06#">浜名湖</option>
-          <option value="07#">蒲郡</option><option value="08#">常滑</option>
-          <option value="09#">津</option><option value="10#">三国</option>
-          <option value="11#">びわこ</option><option value="12#">住之江</option>
-          <option value="13#">尼崎</option><option value="14#">鳴門</option>
-          <option value="15#">丸亀</option><option value="16#">児島</option>
-          <option value="17#">宮島</option><option value="18#">徳山</option>
-          <option value="19#">下関</option><option value="20#">若松</option>
-          <option value="21#">芦屋</option><option value="22#">福岡</option>
-          <option value="23#">唐津</option><option value="24#">大村</option>
-        </select>
-      </div>
-      <div style="margin-top:18px;display:flex;gap:8px">
-        <button id="bt-run-btn" onclick="startAutoBacktest()"
-          style="padding:8px 20px;background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(0,153,187,.1));border:1px solid rgba(0,212,255,.4);border-radius:7px;color:var(--cyan);font-family:var(--font-ja);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s">
-          ▶ 自動バックテスト開始
-        </button>
-        <button id="bt-stop-btn" onclick="stopBacktest()" disabled
-          style="padding:8px 16px;background:transparent;border:1px solid rgba(255,68,85,.4);border-radius:7px;color:var(--red);font-family:var(--font-ja);font-size:13px;cursor:pointer;opacity:.4">
-          ■ 停止
-        </button>
+
+      <!-- 進捗バー -->
+      <div id="bt-progress-wrap" style="display:none">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:12px;color:var(--text2)" id="bt-progress-label">準備中...</span>
+          <span style="font-family:var(--font-mono);font-size:12px;color:var(--cyan)" id="bt-progress-pct">0%</span>
+        </div>
+        <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+          <div id="bt-progress-bar" style="height:100%;background:var(--cyan);width:0%;transition:width .4s;border-radius:3px"></div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--text2)" id="bt-eta"></div>
       </div>
     </div>
 
-    <!-- 進捗バー -->
-    <div id="bt-progress-wrap" style="display:none">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:12px;color:var(--text2)" id="bt-progress-label">準備中...</span>
-        <span style="font-family:var(--font-mono);font-size:12px;color:var(--cyan)" id="bt-progress-pct">0%</span>
+    <!-- リアルタイムログ -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">実行ログ（リアルタイム）</div>
+      <div id="bt-realtime-log"
+        style="height:200px;overflow-y:auto;background:var(--bg3);border-radius:8px;padding:10px;font-family:var(--font-mono);font-size:12px;color:var(--text2)">
+        待機中...
       </div>
-      <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
-        <div id="bt-progress-bar" style="height:100%;background:var(--cyan);width:0%;transition:width .4s;border-radius:3px"></div>
+    </div>
+
+    <!-- [修正A] バックテスト結果ログ — 1つのみ残す（重複削除済み） -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">バックテスト結果ログ
+        <button onclick="loadBacktestLog()" style="margin-left:10px;padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text2);font-size:11px;cursor:pointer">🔄 更新</button>
       </div>
-      <div style="margin-top:8px;font-size:11px;color:var(--text2)" id="bt-eta"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>実行日時</th><th>対象日</th><th>会場</th>
+            <th>総R</th><th>軸的中</th><th>軸的中率</th>
+            <th>旧α</th><th>新α</th><th>変化</th>
+          </tr></thead>
+          <!-- [修正A] IDは bt-log-body のみ。旧コードの重複IDを削除 -->
+          <tbody id="bt-log-body">
+            <tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text2)">読み込み中...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
-  <!-- リアルタイムログ -->
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-title">実行ログ（リアルタイム）</div>
-    <div id="bt-realtime-log"
-      style="height:200px;overflow-y:auto;background:var(--bg3);border-radius:8px;padding:10px;font-family:var(--font-mono);font-size:12px;color:var(--text2)">
-      待機中...
+    <!-- [修正A] MASTER_PARAMS現在値 — 1つのみ残す（重複削除済み） -->
+    <div class="card">
+      <div class="card-title">現在のMASTER_PARAMS（α値・EV値）
+        <button onclick="loadBacktestMaster()" style="margin-left:10px;padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text2);font-size:11px;cursor:pointer">🔄 更新</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>会場</th><th>グループ</th><th>α値</th>
+            <th>1号艇EV</th><th>2号艇EV</th><th>3号艇EV</th>
+            <th>4号艇EV</th><th>5号艇EV</th><th>6号艇EV</th>
+          </tr></thead>
+          <!-- [修正A] IDは bt-master-body のみ。旧コードの重複IDを削除 -->
+          <tbody id="bt-master-body">
+            <tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text2)">読み込み中...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
-  <!-- バックテスト結果ログ -->
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-title">バックテスト結果ログ
-      <button onclick="loadBacktestLog()" style="margin-left:10px;padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text2);font-size:11px;cursor:pointer">🔄 更新</button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>実行日時</th><th>対象日</th><th>会場</th>
-          <th>総R</th><th>軸的中</th><th>軸的中率</th>
-          <th>旧α</th><th>新α</th><th>変化</th>
-        </tr></thead>
-        <tbody id="bt-log-body">
-          <tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text2)">読み込み中...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  </div><!-- /#page-backtest [修正A: 閉じタグ位置を修正] -->
 
-  <!-- MASTER_PARAMS現在値 -->
-  <div class="card">
-    <div class="card-title">現在のMASTER_PARAMS
-      <button onclick="loadBacktestMaster()" style="margin-left:10px;padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text2);font-size:11px;cursor:pointer">🔄 更新</button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>会場</th><th>グループ</th><th>α値</th>
-          <th>1号艇EV</th><th>2号艇EV</th><th>3号艇EV</th>
-          <th>4号艇EV</th><th>5号艇EV</th><th>6号艇EV</th>
-        </tr></thead>
-        <tbody id="bt-master-body">
-          <tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text2)">読み込み中...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-  <!-- BACKTEST_LOGの結果表示 -->
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-title">バックテスト結果ログ</div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>実行日時</th><th>対象日</th><th>会場</th>
-          <th>総R</th><th>軸的中</th><th>軸的中率</th>
-          <th>旧α</th><th>新α</th><th>変化</th>
-        </tr></thead>
-        <tbody id="bt-log-body">
-          <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">読み込み中...</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <button onclick="loadBacktestLog()"
-      style="margin-top:10px;padding:6px 14px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer">
-      🔄 ログを更新
-    </button>
-  </div>
-
-  <!-- MASTER_PARAMSの現在値 -->
-  <div class="card">
-    <div class="card-title">現在のMASTER_PARAMS（α値・EV値）</div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>会場</th><th>グループ</th><th>α値</th>
-          <th>1号艇EV</th><th>2号艇EV</th><th>3号艇EV</th>
-          <th>4号艇EV</th><th>5号艇EV</th><th>6号艇EV</th>
-        </tr></thead>
-        <tbody id="bt-master-body">
-          <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">読み込み中...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-</div>
-
-  
-</div>
+</div><!-- /.wrap -->
 <div class="toast" id="toast"></div>
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyl95PFSRL3ml3OjZOCrhuFIKqUhOUrBaKv0Y6ZgfzAJfIWyHs8ZmFstXhWj3aiH6Q2mg/exec";
 
+// ── 時計
 setInterval(() => {
   document.getElementById("clock").textContent =
     new Date().toLocaleTimeString("ja-JP",{hour12:false});
@@ -485,37 +452,43 @@ setInterval(() => {
 document.getElementById("clock").textContent =
   new Date().toLocaleTimeString("ja-JP",{hour12:false});
 
+// ── ページ切り替え
 function showPage(id, btn) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("page-"+id).classList.add("active");
   if(btn) btn.classList.add("active");
-  if(id==="dashboard") loadDashboard();
+  if(id==="dashboard")  loadDashboard();
   else if(id==="analysis") loadAnalysisLog();
-  else if(id==="venues") loadVenues();
-  else if(id==="chart") loadChart();
+  else if(id==="venues")   loadVenues();
+  else if(id==="chart")    loadChart();
   else if(id==="matching") loadMatching();
   else if(id==="settings") loadSettings();
   else if(id==="backtest") { loadBacktestLog(); loadBacktestMaster(); }
 }
 
-async function gasGet(action) {
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ▼ [修正D] 通信レイヤー
+//   gasGet  → JSONP（既存、CORS完全回避）
+//   gasPost → JSONP経由のGET（postViaGetルート）に切り替え
+//   ※ GASのdoPostはCORSを付与できないため
+//      全通信をGETベースのJSONPに統一
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function gasGet(action) {
   return new Promise((resolve, reject) => {
-    const cbName = "_cb_" + action + "_" + Date.now();
+    const cbName = "_cb_" + action.replace(/\W/g,"_") + "_" + Date.now();
     const script = document.createElement("script");
     const timeout = setTimeout(() => {
       delete window[cbName];
-      document.body.removeChild(script);
+      if(document.body.contains(script)) document.body.removeChild(script);
       reject(new Error("タイムアウト: " + action));
-    }, 15000);
-
+    }, 20000);
     window[cbName] = (data) => {
       clearTimeout(timeout);
       delete window[cbName];
-      document.body.removeChild(script);
+      if(document.body.contains(script)) document.body.removeChild(script);
       resolve(data);
     };
-
     script.src = `${GAS_URL}?action=${action}&callback=${cbName}`;
     script.onerror = () => {
       clearTimeout(timeout);
@@ -525,11 +498,36 @@ async function gasGet(action) {
     document.body.appendChild(script);
   });
 }
-async function gasPost(body) {
-  const res = await fetch(GAS_URL,{method:"POST",body:JSON.stringify(body)});
-  return res.json();
+
+// [修正D] gasPost → postViaGet（JSONP）に切り替え
+function gasPost(body) {
+  return new Promise((resolve, reject) => {
+    const action = body.action || "unknown";
+    const cbName = "_cbp_" + action.replace(/\W/g,"_") + "_" + Date.now();
+    const script = document.createElement("script");
+    const encoded = encodeURIComponent(JSON.stringify(body));
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if(document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error("POSTタイムアウト: " + action));
+    }, 60000); // バックテストは時間がかかるので60秒
+    window[cbName] = (data) => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if(document.body.contains(script)) document.body.removeChild(script);
+      resolve(data);
+    };
+    script.src = `${GAS_URL}?action=postViaGet&data=${encoded}&callback=${cbName}`;
+    script.onerror = () => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error("POST(ViaGet)エラー: " + action));
+    };
+    document.body.appendChild(script);
+  });
 }
 
+// ── ユーティリティ
 function toDateStr(val) {
   if(!val) return "";
   const d = new Date(val);
@@ -539,6 +537,16 @@ function toDateStr(val) {
     String(d.getDate()).padStart(2,"0");
 }
 function todayStr() { return toDateStr(new Date()); }
+function showAlert(msg){
+  const el=document.getElementById("alertBanner");
+  el.textContent=msg; el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),5000);
+}
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),3000);
+}
 
 // ━━━ DASHBOARD ━━━
 async function loadDashboard() {
@@ -548,17 +556,13 @@ async function loadDashboard() {
       gasGet("getSchedule"),
       gasGet("getSettings"),
     ]);
-    if(logData.status==="ok") renderDashboard(logData.logs);
+    if(logData.status==="ok")   renderDashboard(logData.logs);
     if(schedData.status==="ok") renderSchedule(schedData.schedules);
-    if(setData.status==="ok") {
-      document.getElementById("m-threshold").textContent =
-        (setData.settings.notify_threshold||70)+"%";
-    }
+    if(setData.status==="ok")   document.getElementById("m-threshold").textContent=(setData.settings.notify_threshold||70)+"%";
     document.getElementById("gas-status").textContent="接続OK";
-    document.getElementById("last-fetch").textContent=
-      new Date().toLocaleTimeString("ja-JP");
+    document.getElementById("last-fetch").textContent=new Date().toLocaleTimeString("ja-JP");
   } catch(e) {
-    showAlert("GASへの接続に失敗しました。URLを確認してください。");
+    showAlert("GASへの接続に失敗しました: " + e.message);
   }
 }
 
@@ -572,9 +576,9 @@ function renderDashboard(logs) {
 
   document.getElementById("m-analyzed").textContent = todayLogs.length;
   document.getElementById("m-notified").textContent = todayLogs.filter(l=>l.result).length;
-  document.getElementById("m-rate").textContent = rate+"%";
-  document.getElementById("m-hits").textContent = `${hits} / ${total} R`;
-  document.getElementById("m-profit").textContent = (profit>=0?"+":"")+profit.toLocaleString();
+  document.getElementById("m-rate").textContent     = rate+"%";
+  document.getElementById("m-hits").textContent     = `${hits} / ${total} R`;
+  document.getElementById("m-profit").textContent   = (profit>=0?"+":"")+profit.toLocaleString();
 
   const topLog = [...todayLogs].sort((a,b)=>(b.score||0)-(a.score||0))[0];
   if(topLog){
@@ -586,15 +590,16 @@ function renderDashboard(logs) {
   document.getElementById("latest-analysis").innerHTML = latest.length===0
     ? '<div style="text-align:center;padding:20px;color:var(--text2)">解析データがありません</div>'
     : latest.map(l => {
-        const sc = l.score||0;
-        const col = sc>=80?"var(--green)":sc>=70?"var(--amber)":sc>=60?"var(--cyan)":"var(--text2)";
-        const rb = l.result==="的中"?'<span class="badge badge-hit">的中</span>'
-                 : l.result==="不的中"?'<span class="badge badge-miss">不的中</span>'
-                 : '<span class="badge badge-skip">解析済</span>';
+        const sc=l.score||0;
+        const col=sc>=80?"var(--green)":sc>=70?"var(--amber)":sc>=60?"var(--cyan)":"var(--text2)";
+        const rb=l.result==="的中"?'<span class="badge badge-hit">的中</span>'
+               :l.result==="不的中"?'<span class="badge badge-miss">不的中</span>'
+               :'<span class="badge badge-skip">解析済</span>';
         return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
           <div style="min-width:80px"><div style="font-size:13px;font-weight:700">${l.venueName||"--"}</div>
           <div style="font-family:var(--font-mono);font-size:11px;color:var(--text2)">第${l.raceNo||"--"}R</div></div>
-          <div style="flex:1"><div class="score-bar"><div class="score-track"><div class="score-fill" style="width:${sc}%;background:${col}"></div></div>
+          <div style="flex:1"><div class="score-bar"><div class="score-track">
+          <div class="score-fill" style="width:${sc}%;background:${col}"></div></div>
           <div style="font-family:var(--font-mono);font-size:13px;color:${col};min-width:32px">${sc}</div></div>
           <div style="font-size:12px;color:var(--text2);margin-top:3px">${l.bet||"--"}</div></div>
           <div>${rb}</div></div>`;
@@ -622,16 +627,15 @@ function renderSchedule(schedules) {
 
   function fmtTime(t){
     if(!t) return "--";
-    if(t instanceof Date || (typeof t==="string" && t.includes("1899")))
-      return new Date(t).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+    if(typeof t==="string" && t.includes("1899")) return new Date(t).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
     return String(t).substring(0,5);
   }
 
   document.getElementById("today-schedule").innerHTML =
     Object.values(venueMap).map(v=>{
-      const sc = v.races.reduce((a,r)=>{a[r.status]=(a[r.status]||0)+1;return a},{});
-      const first = fmtTime(v.races[0]?.raceTime);
-      const last  = fmtTime(v.races[v.races.length-1]?.raceTime);
+      const sc=v.races.reduce((a,r)=>{a[r.status]=(a[r.status]||0)+1;return a},{});
+      const first=fmtTime(v.races[0]?.raceTime);
+      const last =fmtTime(v.races[v.races.length-1]?.raceTime);
       return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
         <div style="min-width:70px;font-weight:700;font-size:14px">${v.name}</div>
         <div style="font-family:var(--font-mono);font-size:12px;color:var(--text2)">${v.races.length}R</div>
@@ -670,51 +674,41 @@ async function loadAnalysisLog() {
         <td>${rb}</td></tr>`;
     }).join("");
   } catch(e) {
-    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--red)">取得エラー</td></tr>';
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--red)">取得エラー: '+e.message+'</td></tr>';
   }
 }
 
-// ━━━ 会場別成績（バグ修正済み） ━━━
+// ━━━ 会場別成績 ━━━
 async function loadVenues() {
   const wrap = document.getElementById("venue-grid");
   try {
     const data = await gasGet("getMasterParams");
-
-    // ★修正: GASは { status:"ok", data:[...] } の配列形式で返す
     if(data.status !== "ok" || !data.data || !Array.isArray(data.data)) {
       wrap.innerHTML = `<div style="color:var(--red);padding:20px">データ取得エラー<br><small style="color:var(--text2)">${JSON.stringify(data).substring(0,200)}</small></div>`;
       return;
     }
-
     const logData = await gasGet("getLog");
     const logs = (logData.status === "ok" && logData.logs) || [];
-
-    // venueIdで集計（"12#"形式に統一）
     const statsMap = {};
     logs.forEach(l => {
       if(!l.venueId) return;
       const vid = String(l.venueId);
-      if(!statsMap[vid]) statsMap[vid] = {hits:0, total:0};
+      if(!statsMap[vid]) statsMap[vid]={hits:0,total:0};
       if(l.result==="的中"||l.result==="不的中") statsMap[vid].total++;
       if(l.result==="的中") statsMap[vid].hits++;
     });
-
-    // ★修正: data.data は配列。日本語キーでアクセス
     const html = data.data.map(p => {
-      const vid      = String(p["会場ID"] || "");
-      const venueName= p["会場名"]  || "--";
-      const group    = p["グループ"] || "";
-      const alpha    = parseFloat(p["α補正値"]) || 0.80;
-      const inRate   = parseFloat(p["イン逃げ率"]) || 0;
-      const patch    = p["特記パッチ"] || "";
-
-      const s    = statsMap[vid] || {hits:0, total:0};
-      const rate = s.total > 0 ? Math.round(s.hits / s.total * 1000) / 10 : null;
-
-      const ac = alpha>=0.90?"var(--green)":alpha>=0.80?"var(--cyan)":alpha>=0.70?"var(--amber)":"var(--red)";
-      const gc = group==="超鉄壁"?"var(--green)":group==="鉄壁"?"var(--cyan)":group==="波乱"?"var(--amber)":group==="難攻"?"var(--red)":"var(--text2)";
-      const rc = rate===null?"var(--text2)":rate>=50?"var(--green)":rate>=30?"var(--amber)":"var(--red)";
-
+      const vid      = String(p["会場ID"]||"");
+      const venueName= p["会場名"]||"--";
+      const group    = p["グループ"]||"";
+      const alpha    = parseFloat(p["α補正値"])||0.80;
+      const inRate   = parseFloat(p["イン逃げ率"])||0;
+      const patch    = p["特記パッチ"]||"";
+      const s        = statsMap[vid]||{hits:0,total:0};
+      const rate     = s.total>0 ? Math.round(s.hits/s.total*1000)/10 : null;
+      const ac=alpha>=0.90?"var(--green)":alpha>=0.80?"var(--cyan)":alpha>=0.70?"var(--amber)":"var(--red)";
+      const gc=group==="超鉄壁"?"var(--green)":group==="鉄壁"?"var(--cyan)":group==="波乱"?"var(--amber)":group==="難攻"?"var(--red)":"var(--text2)";
+      const rc=rate===null?"var(--text2)":rate>=50?"var(--green)":rate>=30?"var(--amber)":"var(--red)";
       return `<div class="venue-card">
         <div style="flex:1">
           <div class="venue-name">${venueName}</div>
@@ -724,12 +718,11 @@ async function loadVenues() {
           <div class="alpha-bar"><div class="alpha-fill" style="width:${Math.min(alpha*100,100)}%"></div></div>
         </div>
         <div class="venue-stats">
-          <div class="venue-rate" style="color:${rc}">${rate !== null ? rate+"%" : "--"}</div>
+          <div class="venue-rate" style="color:${rc}">${rate!==null?rate+"%":"--"}</div>
           <div class="venue-detail">${s.hits}/${s.total}R</div>
         </div>
       </div>`;
     }).join("");
-
     wrap.innerHTML = html || '<div style="color:var(--text2);padding:20px">データなし</div>';
   } catch(e) {
     wrap.innerHTML = `<div style="color:var(--red);padding:20px">取得エラー: ${e.message}</div>`;
@@ -740,8 +733,7 @@ async function loadVenues() {
 function toggleThresholdRow() {
   const allOn = document.getElementById("s-notify-all").checked;
   const thOn  = document.getElementById("s-notify-threshold-on").checked;
-  const row   = document.getElementById("threshold-row");
-  row.classList.toggle("hidden", allOn || !thOn);
+  document.getElementById("threshold-row").classList.toggle("hidden", allOn || !thOn);
 }
 
 async function loadSettings() {
@@ -749,41 +741,32 @@ async function loadSettings() {
     const data = await gasGet("getSettings");
     if(data.status!=="ok") throw new Error("GAS error");
     const s = data.settings;
-
     const method = s.notify_method||"email";
     document.getElementById("s-notify-email").checked = method==="email"||method==="both";
     document.getElementById("s-notify-line").checked  = method==="line" ||method==="both";
-
-    document.getElementById("s-notify-all").checked           = s.notify_all==="true"||s.notify_all===true;
-    document.getElementById("s-notify-threshold-on").checked  = s.notify_threshold_on!=="false";
-    document.getElementById("s-notify-hit").checked           = s.notify_hit!=="false";
-    document.getElementById("s-notify-miss").checked          = s.notify_miss==="true"||s.notify_miss===true;
-
-    const th = Number(s.notify_threshold)||70;
-    document.getElementById("s-threshold").value = th;
-    document.getElementById("s-threshold-val").textContent = th+"%";
+    document.getElementById("s-notify-all").checked          = s.notify_all==="true"||s.notify_all===true;
+    document.getElementById("s-notify-threshold-on").checked = s.notify_threshold_on!=="false";
+    document.getElementById("s-notify-hit").checked          = s.notify_hit!=="false";
+    document.getElementById("s-notify-miss").checked         = s.notify_miss==="true"||s.notify_miss===true;
+    const th=Number(s.notify_threshold)||70;
+    document.getElementById("s-threshold").value=th;
+    document.getElementById("s-threshold-val").textContent=th+"%";
     toggleThresholdRow();
-
     const sw=Number(s.skip_wind_speed)||6;
     document.getElementById("s-skip-wind").value=sw;
     document.getElementById("s-skip-wind-val").textContent=sw+"m";
-
     const sg=Number(s.singularity_r_value)||10;
     document.getElementById("s-singularity").value=sg;
     document.getElementById("s-singularity-val").textContent=sg;
-
     const tk=Number(s.tenkake_r_value)||6;
     document.getElementById("s-tenkake").value=tk;
     document.getElementById("s-tenkake-val").textContent=tk;
-
     const ll=Number(s.consecutive_loss_limit)||3;
     document.getElementById("s-loss-limit").value=ll;
     document.getElementById("s-loss-limit-val").textContent=ll+"連敗";
-
     const dl=Number(s.result_delay_min)||20;
     document.getElementById("s-result-delay").value=dl;
     document.getElementById("s-result-delay-val").textContent=dl+"分後";
-
     document.getElementById("s-report-hour").value=Number(s.daily_report_hour)||21;
     document.getElementById("gas-status").textContent="接続OK";
     document.getElementById("gas-status").className="badge badge-hit";
@@ -798,7 +781,6 @@ async function saveSettings() {
   const emailOn = document.getElementById("s-notify-email").checked;
   const lineOn  = document.getElementById("s-notify-line").checked;
   const method  = emailOn&&lineOn?"both":emailOn?"email":lineOn?"line":"none";
-
   const settings = {
     notify_method:          method,
     notify_all:             document.getElementById("s-notify-all").checked,
@@ -813,213 +795,136 @@ async function saveSettings() {
     result_delay_min:       Number(document.getElementById("s-result-delay").value),
     daily_report_hour:      Number(document.getElementById("s-report-hour").value),
   };
-
   try {
-    const res = await gasPost({action:"saveSettings",settings});
+    const res = await gasPost({action:"saveSettings", settings});
     if(res.status==="ok"){
       showToast("✅ 設定を保存しました");
       document.getElementById("m-threshold").textContent=settings.notify_threshold+"%";
     } else {
       showToast("❌ 保存に失敗しました");
     }
-  } catch(e) { showToast("❌ GAS接続エラー"); }
+  } catch(e) { showToast("❌ GAS接続エラー: "+e.message); }
 }
 
 // ━━━ チャート ━━━
-let chartCum = null;
-let chartRate = null;
+let chartCum=null, chartRate=null;
 
 async function loadChart() {
   try {
-    const data = await gasGet('getDailyStats');
-    if(data.status !== 'ok' || !data.dailyStats || data.dailyStats.length === 0) {
-      document.getElementById('chart-table-body').innerHTML =
+    const data = await gasGet("getDailyStats");
+    if(data.status!=="ok"||!data.dailyStats||data.dailyStats.length===0){
+      document.getElementById("chart-table-body").innerHTML=
         '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">データがありません。レース結果が蓄積されると表示されます。</td></tr>';
       return;
     }
     renderCharts(data.dailyStats);
     renderChartTable(data.dailyStats);
   } catch(e) {
-    document.getElementById('chart-table-body').innerHTML =
-      '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--red)">取得エラー: ' + e.message + '</td></tr>';
+    document.getElementById("chart-table-body").innerHTML=
+      '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--red)">取得エラー: '+e.message+'</td></tr>';
   }
 }
 
 function renderCharts(stats) {
-  const labels   = stats.map(s => s.date.substring(5));
-  const cumData  = stats.map(s => s.cumProfit);
-  const rateData = stats.map(s => s.rate);
-
-  const baseOpts = {
-    responsive: true,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { ticks: { color: '#5a7a99', font: { size: 11 } }, grid: { color: 'rgba(26,45,69,0.5)' } },
-      y: { ticks: { color: '#5a7a99', font: { size: 11 } }, grid: { color: 'rgba(26,45,69,0.5)' } },
-    },
-  };
+  const labels  = stats.map(s => s.date.substring(5));
+  const cumData = stats.map(s => s.cumProfit);
+  const rateData= stats.map(s => s.rate);
+  const baseOpts={responsive:true,plugins:{legend:{display:false}},scales:{
+    x:{ticks:{color:"#5a7a99",font:{size:11}},grid:{color:"rgba(26,45,69,0.5)"}},
+    y:{ticks:{color:"#5a7a99",font:{size:11}},grid:{color:"rgba(26,45,69,0.5)"}}}};
 
   if(chartCum) chartCum.destroy();
-  const ctx1 = document.getElementById('chartCumProfit').getContext('2d');
-  chartCum = new Chart(ctx1, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        data: cumData,
-        borderColor: '#00d4ff',
-        backgroundColor: 'rgba(0,212,255,0.08)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.3,
-        pointBackgroundColor: cumData.map(v => v >= 0 ? '#00e676' : '#ff4455'),
-        pointRadius: 4,
-      }]
-    },
-    options: {
-      ...baseOpts,
-      plugins: {
-        ...baseOpts.plugins,
-        tooltip: { callbacks: { label: ctx => (ctx.raw >= 0 ? '+' : '') + ctx.raw.toLocaleString() + '円' } }
-      },
-      scales: {
-        ...baseOpts.scales,
-        y: { ...baseOpts.scales.y, ticks: { ...baseOpts.scales.y.ticks, callback: v => (v >= 0 ? '+' : '') + v.toLocaleString() + '円' } }
-      }
-    }
+  chartCum = new Chart(document.getElementById("chartCumProfit").getContext("2d"), {
+    type:"line",
+    data:{labels,datasets:[{data:cumData,borderColor:"#00d4ff",backgroundColor:"rgba(0,212,255,0.08)",
+      borderWidth:2,fill:true,tension:0.3,
+      pointBackgroundColor:cumData.map(v=>v>=0?"#00e676":"#ff4455"),pointRadius:4}]},
+    options:{...baseOpts,plugins:{...baseOpts.plugins,tooltip:{callbacks:{label:ctx=>(ctx.raw>=0?"+":"")+ctx.raw.toLocaleString()+"円"}}},
+      scales:{...baseOpts.scales,y:{...baseOpts.scales.y,ticks:{...baseOpts.scales.y.ticks,callback:v=>(v>=0?"+":"")+v.toLocaleString()+"円"}}}}
   });
 
   if(chartRate) chartRate.destroy();
-  const ctx2 = document.getElementById('chartRate').getContext('2d');
-  chartRate = new Chart(ctx2, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        data: rateData,
-        backgroundColor: rateData.map(v => v >= 50 ? 'rgba(0,230,118,0.6)' : v >= 30 ? 'rgba(245,166,35,0.6)' : 'rgba(255,68,85,0.6)'),
-        borderColor:     rateData.map(v => v >= 50 ? '#00e676' : v >= 30 ? '#f5a623' : '#ff4455'),
-        borderWidth: 1,
-        borderRadius: 4,
-      }]
-    },
-    options: {
-      ...baseOpts,
-      plugins: { ...baseOpts.plugins, tooltip: { callbacks: { label: ctx => ctx.raw.toFixed(1) + '%' } } },
-      scales: {
-        ...baseOpts.scales,
-        y: { ...baseOpts.scales.y, min: 0, max: 100, ticks: { ...baseOpts.scales.y.ticks, callback: v => v + '%' } }
-      }
-    }
+  chartRate = new Chart(document.getElementById("chartRate").getContext("2d"), {
+    type:"bar",
+    data:{labels,datasets:[{data:rateData,
+      backgroundColor:rateData.map(v=>v>=50?"rgba(0,230,118,0.6)":v>=30?"rgba(245,166,35,0.6)":"rgba(255,68,85,0.6)"),
+      borderColor:rateData.map(v=>v>=50?"#00e676":v>=30?"#f5a623":"#ff4455"),
+      borderWidth:1,borderRadius:4}]},
+    options:{...baseOpts,plugins:{...baseOpts.plugins,tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(1)+"%"}}},
+      scales:{...baseOpts.scales,y:{...baseOpts.scales.y,min:0,max:100,ticks:{...baseOpts.scales.y.ticks,callback:v=>v+"%"}}}}
   });
 }
 
 function renderChartTable(stats) {
-  const tbody = document.getElementById('chart-table-body');
+  const tbody = document.getElementById("chart-table-body");
   tbody.innerHTML = [...stats].reverse().map(s => {
-    // ★修正: betAmountが0または異常値の場合はhits*100で代替表示
-    const displayBetAmount = (s.betAmount > 0 && s.betAmount < 9999999)
-      ? s.betAmount
-      : s.total * 100; // フォールバック: 1R=100円想定
-
-    const profitColor = s.profit    >= 0 ? 'var(--green)' : 'var(--red)';
-    const cumColor    = s.cumProfit >= 0 ? 'var(--green)' : 'var(--red)';
-    const rateColor   = s.rate >= 50 ? 'var(--green)' : s.rate >= 30 ? 'var(--amber)' : 'var(--red)';
-
-    // ★修正: 回収率をbetAmountが正常な場合のみ計算
-    const roi = displayBetAmount > 0
-      ? (s.dividend / displayBetAmount * 100).toFixed(1)
-      : s.roi.toFixed(1);
-
-    return '<tr>' +
-      '<td style="font-family:var(--font-mono);font-size:12px">' + s.date + '</td>' +
-      '<td style="font-family:var(--font-mono)">' + s.total + 'R</td>' +
-      '<td style="font-family:var(--font-mono)">' + s.hits + '/' + s.total + '</td>' +
-      '<td style="font-family:var(--font-mono);color:' + rateColor + ';font-weight:700">' + s.rate.toFixed(1) + '%</td>' +
-      '<td style="font-family:var(--font-mono);color:var(--text2)">' + displayBetAmount.toLocaleString() + '円</td>' +
-      '<td style="font-family:var(--font-mono);color:var(--cyan)">' + s.dividend.toLocaleString() + '円</td>' +
-      '<td style="font-family:var(--font-mono);color:' + profitColor + ';font-weight:700">' + (s.profit >= 0 ? '+' : '') + s.profit.toLocaleString() + '円</td>' +
-      '<td style="font-family:var(--font-mono);color:' + cumColor + ';font-weight:700">' + (s.cumProfit >= 0 ? '+' : '') + s.cumProfit.toLocaleString() + '円</td>' +
-      '<td style="font-family:var(--font-mono);color:' + rateColor + '">' + roi + '%</td>' +
-      '</tr>';
-  }).join('');
-}
-
-function showAlert(msg){
-  const el=document.getElementById("alertBanner");
-  el.textContent=msg; el.classList.add("show");
-  setTimeout(()=>el.classList.remove("show"),5000);
-}
-function showToast(msg){
-  const t=document.getElementById("toast");
-  t.textContent=msg; t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),3000);
+    const displayBetAmount = (s.betAmount>0&&s.betAmount<9999999) ? s.betAmount : s.total*100;
+    const profitColor = s.profit>=0?"var(--green)":"var(--red)";
+    const cumColor    = s.cumProfit>=0?"var(--green)":"var(--red)";
+    const rateColor   = s.rate>=50?"var(--green)":s.rate>=30?"var(--amber)":"var(--red)";
+    const roi         = displayBetAmount>0 ? (s.dividend/displayBetAmount*100).toFixed(1) : s.roi.toFixed(1);
+    return `<tr>
+      <td style="font-family:var(--font-mono);font-size:12px">${s.date}</td>
+      <td style="font-family:var(--font-mono)">${s.total}R</td>
+      <td style="font-family:var(--font-mono)">${s.hits}/${s.total}</td>
+      <td style="font-family:var(--font-mono);color:${rateColor};font-weight:700">${s.rate.toFixed(1)}%</td>
+      <td style="font-family:var(--font-mono);color:var(--text2)">${displayBetAmount.toLocaleString()}円</td>
+      <td style="font-family:var(--font-mono);color:var(--cyan)">${s.dividend.toLocaleString()}円</td>
+      <td style="font-family:var(--font-mono);color:${profitColor};font-weight:700">${s.profit>=0?"+":""}${s.profit.toLocaleString()}円</td>
+      <td style="font-family:var(--font-mono);color:${cumColor};font-weight:700">${s.cumProfit>=0?"+":""}${s.cumProfit.toLocaleString()}円</td>
+      <td style="font-family:var(--font-mono);color:${rateColor}">${roi}%</td></tr>`;
+  }).join("");
 }
 
 // ━━━ 照合分析 ━━━
 async function loadMatching() {
   try {
     const data = await gasGet("getPatternStats");
-    if(data.status !== "ok") {
-      document.getElementById("miss-chart-wrap").innerHTML =
-        '<div style="color:var(--red);padding:20px">データ取得エラー</div>';
+    if(data.status!=="ok"){
+      document.getElementById("miss-chart-wrap").innerHTML='<div style="color:var(--red);padding:20px">データ取得エラー</div>';
       return;
     }
-
-    // サマリー
-    const s = data.summary || {};
-    const total = (s.totalHit||0) + (s.totalMiss||0);
+    const s=data.summary||{};
+    const total=(s.totalHit||0)+(s.totalMiss||0);
     document.getElementById("mt-total").textContent    = total;
-    document.getElementById("mt-hitrate").textContent  = (s.hitRate||0) + "%";
+    document.getElementById("mt-hitrate").textContent  = (s.hitRate||0)+"%";
     document.getElementById("mt-hits").textContent     = `${s.totalHit||0} / ${total}`;
-    document.getElementById("mt-axisrate").textContent = (s.axisHitRate||0) + "%";
-    document.getElementById("mt-axismiss").textContent = (s.axisMissRate||0) + "%";
-    document.getElementById("mt-himomiss").textContent = (s.himoMissRate||0) + "%";
-
-    // 外れ要因グラフ（会場別）
-    renderMissChart(data.missStats || []);
-
-    // 気象マトリックス
-    renderWeatherMatrix(data.venueStats || []);
-
-    // 照合テーブル
-    renderMatchingTable(data.recentPatterns || []);
-
+    document.getElementById("mt-axisrate").textContent = (s.axisHitRate||0)+"%";
+    document.getElementById("mt-axismiss").textContent = (s.axisMissRate||0)+"%";
+    document.getElementById("mt-himomiss").textContent = (s.himoMissRate||0)+"%";
+    renderMissChart(data.missStats||[]);
+    renderWeatherMatrix(data.venueStats||[]);
+    renderMatchingTable(data.recentPatterns||[]);
   } catch(e) {
-    document.getElementById("miss-chart-wrap").innerHTML =
-      `<div style="color:var(--red);padding:20px">取得エラー: ${e.message}</div>`;
+    document.getElementById("miss-chart-wrap").innerHTML=`<div style="color:var(--red);padding:20px">取得エラー: ${e.message}</div>`;
   }
 }
 
 function renderMissChart(missStats) {
-  const wrap = document.getElementById("miss-chart-wrap");
-  if(!missStats || missStats.length === 0) {
-    wrap.innerHTML = '<div style="color:var(--text2);padding:20px">データ蓄積中（レース結果が記録されると表示されます）</div>';
+  const wrap=document.getElementById("miss-chart-wrap");
+  if(!missStats||missStats.length===0){
+    wrap.innerHTML='<div style="color:var(--text2);padding:20px">データ蓄積中（レース結果が記録されると表示されます）</div>';
     return;
   }
-
-  // 会場別に集計
-  const venueMap = {};
-  missStats.forEach(m => {
-    const vid = m["会場ID"] || m["会場名"] || "";
-    const vname = m["会場名"] || vid;
-    if(!venueMap[vid]) venueMap[vid] = { name:vname, axis:0, himo:0, other:0, total:0 };
-    const cnt = parseInt(m["件数"]) || 0;
-    const factor = m["外れ要因"] || "";
-    venueMap[vid].total += cnt;
-    if(factor === "軸外れ") venueMap[vid].axis += cnt;
-    else if(factor === "紐外れ") venueMap[vid].himo += cnt;
-    else venueMap[vid].other += cnt;
+  const venueMap={};
+  missStats.forEach(m=>{
+    const vid=m["会場ID"]||m["会場名"]||"";
+    const vname=m["会場名"]||vid;
+    if(!venueMap[vid]) venueMap[vid]={name:vname,axis:0,himo:0,other:0,total:0};
+    const cnt=parseInt(m["件数"])||0;
+    const factor=m["外れ要因"]||"";
+    venueMap[vid].total+=cnt;
+    if(factor==="軸外れ") venueMap[vid].axis+=cnt;
+    else if(factor==="紐外れ") venueMap[vid].himo+=cnt;
+    else venueMap[vid].other+=cnt;
   });
-
-  wrap.innerHTML = Object.values(venueMap).filter(v => v.total > 0).map(v => {
-    const axPct  = Math.round(v.axis/v.total*100);
-    const hmPct  = Math.round(v.himo/v.total*100);
-    const otPct  = 100 - axPct - hmPct;
+  wrap.innerHTML=Object.values(venueMap).filter(v=>v.total>0).map(v=>{
+    const axPct=Math.round(v.axis/v.total*100);
+    const hmPct=Math.round(v.himo/v.total*100);
+    const otPct=100-axPct-hmPct;
     return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px">
       <div style="font-weight:700;font-size:13px;margin-bottom:8px">${v.name}
-        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text2);margin-left:6px">${v.total}件</span>
-      </div>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text2);margin-left:6px">${v.total}件</span></div>
       <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:6px">
         <div style="width:${axPct}%;background:var(--red)"></div>
         <div style="width:${hmPct}%;background:var(--amber)"></div>
@@ -1029,89 +934,58 @@ function renderMissChart(missStats) {
         <span style="color:var(--red)">■軸外れ ${axPct}%</span>
         <span style="color:var(--amber)">■紐外れ ${hmPct}%</span>
         <span style="color:var(--text2)">■その他 ${otPct}%</span>
-      </div>
-    </div>`;
-  }).join("") || '<div style="color:var(--text2);padding:20px">データなし</div>';
+      </div></div>`;
+  }).join("")||'<div style="color:var(--text2);padding:20px">データなし</div>';
 }
 
 function renderWeatherMatrix(venueStats) {
-  const tbody = document.getElementById("weather-matrix-body");
-  if(!venueStats || venueStats.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">データ蓄積中</td></tr>';
+  const tbody=document.getElementById("weather-matrix-body");
+  if(!venueStats||venueStats.length===0){
+    tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">データ蓄積中</td></tr>';
     return;
   }
-
-  const fmt = (v) => {
-    if(v === "-" || v === "" || v === null || v === undefined) return '<span style="color:var(--text2)">-</span>';
-    const n = parseFloat(v);
+  const fmt=(v)=>{
+    if(v==="-"||v===""||v===null||v===undefined) return '<span style="color:var(--text2)">-</span>';
+    const n=parseFloat(v);
     if(isNaN(n)) return '<span style="color:var(--text2)">-</span>';
-    const col = n >= 30 ? "var(--green)" : n >= 15 ? "var(--amber)" : "var(--red)";
+    const col=n>=30?"var(--green)":n>=15?"var(--amber)":"var(--red)";
     return `<span style="font-family:var(--font-mono);color:${col};font-weight:700">${n}%</span>`;
   };
-
-  tbody.innerHTML = venueStats.map(v => {
-    const total = parseInt(v["総レース"]) || 0;
-    const rate  = parseFloat(v["的中率"]) || 0;
-    const rc    = rate >= 30 ? "var(--green)" : rate >= 15 ? "var(--amber)" : "var(--red)";
-    const roi   = parseFloat(v["回収率"]) || 0;
-    const roiC  = roi >= 100 ? "var(--green)" : roi >= 70 ? "var(--amber)" : "var(--red)";
+  tbody.innerHTML=venueStats.map(v=>{
+    const total=parseInt(v["総レース"])||0;
+    const rate=parseFloat(v["的中率"])||0;
+    const rc=rate>=30?"var(--green)":rate>=15?"var(--amber)":"var(--red)";
+    const roi=parseFloat(v["回収率"])||0;
+    const roiC=roi>=100?"var(--green)":roi>=70?"var(--amber)":"var(--red)";
     return `<tr>
       <td style="font-weight:700">${v["会場名"]||"--"}</td>
       <td style="font-family:var(--font-mono);color:var(--text2)">${total}</td>
       <td><span style="font-family:var(--font-mono);color:${rc};font-weight:700">${rate}%</span></td>
-      <td>${fmt(v["風速0-2m_的中率"])}</td>
-      <td>${fmt(v["風速3-4m_的中率"])}</td>
-      <td>${fmt(v["風速5m以上_的中率"])}</td>
-      <td>${fmt(v["波高0-2cm_的中率"])}</td>
-      <td>${fmt(v["波高3-5cm_的中率"])}</td>
-      <td>${fmt(v["波高6cm以上_的中率"])}</td>
-      <td>${fmt(v["3連単流し_的中率"])}</td>
-      <td>${fmt(v["2連複_的中率"])}</td>
-      <td>${fmt(v["3連複BOX_的中率"])}</td>
-      <td><span style="font-family:var(--font-mono);color:${roiC}">${roi}%</span></td>
-    </tr>`;
+      <td>${fmt(v["風速0-2m_的中率"])}</td><td>${fmt(v["風速3-4m_的中率"])}</td><td>${fmt(v["風速5m以上_的中率"])}</td>
+      <td>${fmt(v["波高0-2cm_的中率"])}</td><td>${fmt(v["波高3-5cm_的中率"])}</td><td>${fmt(v["波高6cm以上_的中率"])}</td>
+      <td>${fmt(v["3連単流し_的中率"])}</td><td>${fmt(v["2連複_的中率"])}</td><td>${fmt(v["3連複BOX_的中率"])}</td>
+      <td><span style="font-family:var(--font-mono);color:${roiC}">${roi}%</span></td></tr>`;
   }).join("");
 }
 
 function renderMatchingTable(patterns) {
-  const tbody = document.getElementById("matching-table-body");
-  if(!patterns || patterns.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">データ蓄積中</td></tr>';
+  const tbody=document.getElementById("matching-table-body");
+  if(!patterns||patterns.length===0){
+    tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">データ蓄積中</td></tr>';
     return;
   }
-
-  tbody.innerHTML = [...patterns].reverse().map(p => {
-    const isHit   = p["的中/不的中"] === "的中";
-    const rb      = isHit
-      ? '<span class="badge badge-hit">的中</span>'
-      : '<span class="badge badge-miss">不的中</span>';
-
-    const axis1   = p["軸的中"] === "○"
-      ? '<span style="color:var(--green)">○</span>'
-      : '<span style="color:var(--red)">×</span>';
-    const sec2    = p["2着的中"] === "○"
-      ? '<span style="color:var(--green)">○</span>'
-      : '<span style="color:var(--red)">×</span>';
-
-    const factor  = p["外れ要因"] || "-";
-    const fc      = factor === "軸外れ" ? "var(--red)"
-                  : factor === "紐外れ" ? "var(--amber)"
-                  : factor === "的中"   ? "var(--green)"
-                  : "var(--text2)";
-
-    const profit  = parseFloat(p["正確な収支"]) || 0;
-    const pc      = profit >= 0 ? "var(--green)" : "var(--red)";
-
-    const time    = p["日時"] ? new Date(p["日時"]).toLocaleString("ja-JP",{
-      month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"
-    }) : "--";
-
-    const betTypeLabel = p["買い目タイプ"] === "trifecta" ? "3連単"
-                       : p["買い目タイプ"] === "trio"     ? "3連複"
-                       : p["買い目タイプ"] === "exacta"   ? "2連複" : "-";
-
-    const resultStr = [p["1着"],p["2着"],p["3着"]].filter(Boolean).join("-") || "--";
-
+  tbody.innerHTML=[...patterns].reverse().map(p=>{
+    const isHit=p["的中/不的中"]==="的中";
+    const rb=isHit?'<span class="badge badge-hit">的中</span>':'<span class="badge badge-miss">不的中</span>';
+    const axis1=p["軸的中"]==="○"?'<span style="color:var(--green)">○</span>':'<span style="color:var(--red)">×</span>';
+    const sec2 =p["2着的中"]==="○"?'<span style="color:var(--green)">○</span>':'<span style="color:var(--red)">×</span>';
+    const factor=p["外れ要因"]||"-";
+    const fc=factor==="軸外れ"?"var(--red)":factor==="紐外れ"?"var(--amber)":factor==="的中"?"var(--green)":"var(--text2)";
+    const profit=parseFloat(p["正確な収支"])||0;
+    const pc=profit>=0?"var(--green)":"var(--red)";
+    const time=p["日時"]?new Date(p["日時"]).toLocaleString("ja-JP",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}):"--";
+    const betTypeLabel=p["買い目タイプ"]==="trifecta"?"3連単":p["買い目タイプ"]==="trio"?"3連複":p["買い目タイプ"]==="exacta"?"2連複":"-";
+    const resultStr=[p["1着"],p["2着"],p["3着"]].filter(Boolean).join("-")||"--";
     return `<tr>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--text2)">${time}</td>
       <td style="font-weight:700">${p["会場名"]||"--"}</td>
@@ -1125,192 +999,178 @@ function renderMatchingTable(patterns) {
       <td>${rb}</td>
       <td style="color:${fc};font-size:12px">${factor}</td>
       <td style="font-family:var(--font-mono);color:var(--cyan)">${(parseFloat(p["正確な払戻"])||0).toLocaleString()}円</td>
-      <td style="font-family:var(--font-mono);color:${pc};font-weight:700">${profit>=0?"+":""}${profit.toLocaleString()}円</td>
-    </tr>`;
+      <td style="font-family:var(--font-mono);color:${pc};font-weight:700">${profit>=0?"+":""}${profit.toLocaleString()}円</td></tr>`;
   }).join("");
 }
 
-// ━━━ バックテスト 自動実行エンジン ━━━
-let btRunning  = false;
-let btStopFlag = false;
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ▼ バックテスト 自動実行エンジン
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let btRunning=false, btStopFlag=false;
 
-(function initBacktestDate(){
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  document.getElementById("bt-date").value =
-    d.getFullYear()+"-"+
-    String(d.getMonth()+1).padStart(2,"0")+"-"+
-    String(d.getDate()).padStart(2,"0");
+// デフォルト日付: 昨日
+(function initBtDate(){
+  const d=new Date(); d.setDate(d.getDate()-1);
+  document.getElementById("bt-date").value=
+    d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 })();
 
-function stopBacktest() {
-  btStopFlag = true;
+function stopBacktest(){
+  btStopFlag=true;
   btLog("⏹ 停止リクエスト受付。現在の処理完了後に停止します...", "var(--amber)");
 }
-
-function btLog(msg, color="var(--text2)") {
-  const el = document.getElementById("bt-realtime-log");
-  const time = new Date().toLocaleTimeString("ja-JP",{hour12:false});
-  el.innerHTML += `<div style="color:${color}"><span style="color:var(--border)">[${time}]</span> ${msg}</div>`;
-  el.scrollTop = el.scrollHeight;
+function btLog(msg, color="var(--text2)"){
+  const el=document.getElementById("bt-realtime-log");
+  const time=new Date().toLocaleTimeString("ja-JP",{hour12:false});
+  el.innerHTML+=`<div style="color:${color}"><span style="color:var(--border)">[${time}]</span> ${msg}</div>`;
+  el.scrollTop=el.scrollHeight;
 }
-
-function btSetProgress(label, pct, eta="") {
-  document.getElementById("bt-progress-label").textContent = label;
-  document.getElementById("bt-progress-pct").textContent   = Math.round(pct)+"%";
-  document.getElementById("bt-progress-bar").style.width   = pct+"%";
-  document.getElementById("bt-eta").textContent            = eta;
+function btSetProgress(label, pct, eta=""){
+  document.getElementById("bt-progress-label").textContent=label;
+  document.getElementById("bt-progress-pct").textContent=Math.round(pct)+"%";
+  document.getElementById("bt-progress-bar").style.width=pct+"%";
+  document.getElementById("bt-eta").textContent=eta;
 }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-async function startAutoBacktest() {
+async function startAutoBacktest(){
   if(btRunning){ showToast("実行中です"); return; }
-
-  const dateVal = document.getElementById("bt-date").value;
+  const dateVal=document.getElementById("bt-date").value;
   if(!dateVal){ showToast("❌ 日付を選択してください"); return; }
 
-  const hd       = dateVal.replace(/-/g,""); // "20260416"
+  const hd          = dateVal.replace(/-/g,"");
   const venueFilter = document.getElementById("bt-venue").value;
+  const sourceMode  = document.getElementById("bt-source").value;
 
-  btRunning  = true;
-  btStopFlag = false;
-
-  document.getElementById("bt-run-btn").disabled  = true;
-  document.getElementById("bt-stop-btn").disabled = false;
-  document.getElementById("bt-stop-btn").style.opacity = "1";
-  document.getElementById("bt-progress-wrap").style.display = "block";
-  document.getElementById("bt-realtime-log").innerHTML = "";
+  btRunning=true; btStopFlag=false;
+  document.getElementById("bt-run-btn").disabled=true;
+  document.getElementById("bt-stop-btn").disabled=false;
+  document.getElementById("bt-stop-btn").style.opacity="1";
+  document.getElementById("bt-progress-wrap").style.display="block";
+  document.getElementById("bt-realtime-log").innerHTML="";
   btLog(`🚀 バックテスト開始: ${dateVal}`, "var(--cyan)");
 
   try {
-    // ① その日のEXECUTION_LOGから会場リストを取得
-    btLog("📋 対象会場を取得中...", "var(--text2)");
-    const logData = await gasGet("getLog");
-    if(logData.status !== "ok"){
-      btLog("❌ ログ取得失敗", "var(--red)");
-      return;
-    }
+    let venues=[];
 
-    // 日付でフィルタして会場リストを抽出（順番・重複なし）
-    const todayLogs = logData.logs.filter(l => {
-      if(!l.date) return false;
-      const d = new Date(l.date);
-      if(isNaN(d.getTime())) return false;
-      const ds = d.getFullYear()+
-        String(d.getMonth()+1).padStart(2,"0")+
-        String(d.getDate()).padStart(2,"0");
-      return ds === hd;
-    });
+    if(venueFilter !== "ALL"){
+      // 単一会場指定
+      const logData = await gasGet("getMasterParams");
+      const found   = (logData.data||[]).find(p=>String(p["会場ID"])===venueFilter);
+      venues = [{ venueId: venueFilter, venueName: found ? found["会場名"] : venueFilter }];
 
-    // 会場IDでユニーク化（出現順を維持）
-    const venueOrder = [];
-    const seen = new Set();
-    todayLogs.forEach(l => {
-      if(l.venueId && !seen.has(l.venueId)){
-        seen.add(l.venueId);
-        venueOrder.push({ venueId: l.venueId, venueName: l.venueName||l.venueId });
+    } else if(sourceMode === "all24"){
+      // 全24会場を直接指定（LOGに依存しない）
+      // [修正B] GASのVENUE_LISTと同じ順番
+      const all24 = [
+        {venueId:"01#",venueName:"桐生"},{venueId:"02#",venueName:"戸田"},
+        {venueId:"03#",venueName:"江戸川"},{venueId:"04#",venueName:"平和島"},
+        {venueId:"05#",venueName:"多摩川"},{venueId:"06#",venueName:"浜名湖"},
+        {venueId:"07#",venueName:"蒲郡"},{venueId:"08#",venueName:"常滑"},
+        {venueId:"09#",venueName:"津"},{venueId:"10#",venueName:"三国"},
+        {venueId:"11#",venueName:"びわこ"},{venueId:"12#",venueName:"住之江"},
+        {venueId:"13#",venueName:"尼崎"},{venueId:"14#",venueName:"鳴門"},
+        {venueId:"15#",venueName:"丸亀"},{venueId:"16#",venueName:"児島"},
+        {venueId:"17#",venueName:"宮島"},{venueId:"18#",venueName:"徳山"},
+        {venueId:"19#",venueName:"下関"},{venueId:"20#",venueName:"若松"},
+        {venueId:"21#",venueName:"芦屋"},{venueId:"22#",venueName:"福岡"},
+        {venueId:"23#",venueName:"唐津"},{venueId:"24#",venueName:"大村"},
+      ];
+      btLog("📋 全24会場を直接取得モードで実行します", "var(--text2)");
+      btLog("⚠️ 開催なし会場はGAS側が自動スキップします", "var(--text2)");
+      venues = all24;
+
+    } else {
+      // EXECUTION_LOGから会場リストを取得（旧来モード）
+      btLog("📋 EXECUTION_LOGから対象会場を取得中...", "var(--text2)");
+      const logData = await gasGet("getLog");
+      if(logData.status!=="ok"){
+        btLog("❌ ログ取得失敗", "var(--red)"); return;
       }
-    });
-
-    // 会場フィルタ適用
-    const venues = venueFilter === "ALL"
-      ? venueOrder
-      : venueOrder.filter(v => v.venueId === venueFilter);
-
-    if(venues.length === 0){
-      btLog("⚠️ 対象会場がありません。日付・会場を確認してください。", "var(--amber)");
-      return;
+      const todayLogs = logData.logs.filter(l=>{
+        if(!l.date) return false;
+        const d=new Date(l.date);
+        if(isNaN(d.getTime())) return false;
+        const ds=d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
+        return ds===hd;
+      });
+      const seen=new Set();
+      todayLogs.forEach(l=>{
+        if(l.venueId&&!seen.has(l.venueId)){
+          seen.add(l.venueId);
+          venues.push({venueId:l.venueId,venueName:l.venueName||l.venueId});
+        }
+      });
     }
 
-    btLog(`📍 対象会場: ${venues.length}会場（${venues.map(v=>v.venueName).join("、")}）`, "var(--cyan)");
+    if(venues.length===0){
+      btLog("⚠️ 対象会場がありません", "var(--amber)"); return;
+    }
+    btLog(`📍 対象: ${venues.length}会場（${venues.map(v=>v.venueName).join("、")}）`, "var(--cyan)");
 
-    const totalSteps = venues.length * 2; // 各会場 R1-6 + R7-12
-    let stepDone = 0;
-    const startTime = Date.now();
+    const totalSteps=venues.length*2;
+    let stepDone=0;
+    const startTime=Date.now();
 
     for(const venue of venues){
-      if(btStopFlag){
-        btLog("⏹ ユーザーにより停止されました", "var(--amber)");
-        break;
-      }
-
-      btLog(`\n🏁 ${venue.venueName}（${venue.venueId}）開始`, "var(--cyan)");
+      if(btStopFlag){ btLog("⏹ 停止", "var(--amber)"); break; }
+      btLog(`\n🏁 ${venue.venueName}（${venue.venueId}）`, "var(--cyan)");
 
       // R1〜R6
       btLog(`  📊 R1〜R6 解析中...`, "var(--text2)");
-      btSetProgress(
-        `${venue.venueName} R1〜R6`,
-        (stepDone / totalSteps) * 100,
-        calcEta(startTime, stepDone, totalSteps)
-      );
+      btSetProgress(`${venue.venueName} R1〜R6`, stepDone/totalSteps*100, calcEta(startTime,stepDone,totalSteps));
 
       const res1 = await gasPost({
-        action:       "runBacktestRange",
-        targetDate:   hd,
-        targetVenue:  venue.venueId,
-        raceFrom:     1,
-        raceTo:       6
+        action:"runBacktestRange", targetDate:hd,
+        targetVenue:venue.venueId, raceFrom:1, raceTo:6
       });
       stepDone++;
 
-      if(res1.status === "ok"){
-        btLog(
-          `  ✅ R1〜R6完了: ${res1.hits}/${res1.processed}的中` +
-          (res1.details ? " [" + res1.details.map(d =>
-            d.hit ? `<span style="color:var(--green)">R${d.raceNo}✓</span>`
-                  : `<span style="color:var(--red)">R${d.raceNo}✗</span>`
-          ).join(" ") + "]" : ""),
-          "var(--text)"
-        );
+      if(res1.status==="ok"){
+        const detailStr = res1.details ? " ["+res1.details.map(d=>
+          d.hit ? `<span style="color:var(--green)">R${d.raceNo}✓</span>`
+                : `<span style="color:var(--red)">R${d.raceNo}✗</span>`
+        ).join(" ")+"]" : "";
+        if(res1.processed===0){
+          btLog(`  ⚪ 開催なし（スキップ）`, "var(--text2)");
+        } else {
+          btLog(`  ✅ 完了: ${res1.hits}/${res1.processed}的中${detailStr}`, "var(--text)");
+        }
       } else {
-        btLog(`  ❌ R1〜R6エラー: ${res1.message||"不明"}`, "var(--red)");
+        btLog(`  ❌ エラー: ${res1.message||"不明"}`, "var(--red)");
       }
 
-      // R1-6とR7-12の間に間隔を置く（GAS側の処理完了待ち）
       btLog(`  ⏳ 次のバッチまで35秒待機中...`, "var(--text2)");
       await sleep(35000);
-
       if(btStopFlag){ btLog("⏹ 停止", "var(--amber)"); break; }
 
       // R7〜R12
       btLog(`  📊 R7〜R12 解析中...`, "var(--text2)");
-      btSetProgress(
-        `${venue.venueName} R7〜R12`,
-        (stepDone / totalSteps) * 100,
-        calcEta(startTime, stepDone, totalSteps)
-      );
+      btSetProgress(`${venue.venueName} R7〜R12`, stepDone/totalSteps*100, calcEta(startTime,stepDone,totalSteps));
 
       const res2 = await gasPost({
-        action:       "runBacktestRange",
-        targetDate:   hd,
-        targetVenue:  venue.venueId,
-        raceFrom:     7,
-        raceTo:       12
+        action:"runBacktestRange", targetDate:hd,
+        targetVenue:venue.venueId, raceFrom:7, raceTo:12
       });
       stepDone++;
 
-      if(res2.status === "ok"){
-        btLog(
-          `  ✅ R7〜R12完了: ${res2.hits}/${res2.processed}的中` +
-          (res2.details ? " [" + res2.details.map(d =>
-            d.hit ? `<span style="color:var(--green)">R${d.raceNo}✓</span>`
-                  : `<span style="color:var(--red)">R${d.raceNo}✗</span>`
-          ).join(" ") + "]" : ""),
-          "var(--text)"
-        );
+      if(res2.status==="ok"){
+        const detailStr = res2.details ? " ["+res2.details.map(d=>
+          d.hit ? `<span style="color:var(--green)">R${d.raceNo}✓</span>`
+                : `<span style="color:var(--red)">R${d.raceNo}✗</span>`
+        ).join(" ")+"]" : "";
+        if(res2.processed===0){
+          btLog(`  ⚪ 開催なし（スキップ）`, "var(--text2)");
+        } else {
+          btLog(`  ✅ 完了: ${res2.hits}/${res2.processed}的中${detailStr}`, "var(--text)");
+        }
       } else {
-        btLog(`  ❌ R7〜R12エラー: ${res2.message||"不明"}`, "var(--red)");
+        btLog(`  ❌ エラー: ${res2.message||"不明"}`, "var(--red)");
       }
 
-      btSetProgress(
-        `${venue.venueName} 完了`,
-        (stepDone / totalSteps) * 100,
-        calcEta(startTime, stepDone, totalSteps)
-      );
+      btSetProgress(`${venue.venueName} 完了`, stepDone/totalSteps*100, calcEta(startTime,stepDone,totalSteps));
 
-      // 会場間インターバル（最後の会場はスキップ）
-      if(venues.indexOf(venue) < venues.length - 1 && !btStopFlag){
+      if(venues.indexOf(venue)<venues.length-1&&!btStopFlag){
         btLog(`  ⏳ 次の会場まで20秒待機中...`, "var(--text2)");
         await sleep(20000);
       }
@@ -1322,45 +1182,42 @@ async function startAutoBacktest() {
       await sleep(2000);
       await loadBacktestLog();
       await loadBacktestMaster();
-      showToast("✅ バックテスト完了！α値・EV値を更新しました");
+      showToast("✅ バックテスト完了！");
     }
 
   } catch(e) {
-    btLog(`❌ 予期しないエラー: ${e.message}`, "var(--red)");
+    btLog(`❌ エラー: ${e.message}`, "var(--red)");
   } finally {
-    btRunning = false;
-    btStopFlag = false;
-    document.getElementById("bt-run-btn").disabled  = false;
-    document.getElementById("bt-stop-btn").disabled = true;
-    document.getElementById("bt-stop-btn").style.opacity = "0.4";
+    btRunning=false; btStopFlag=false;
+    document.getElementById("bt-run-btn").disabled=false;
+    document.getElementById("bt-stop-btn").disabled=true;
+    document.getElementById("bt-stop-btn").style.opacity="0.4";
   }
 }
 
-function calcEta(startTime, done, total) {
-  if(done === 0) return "";
-  const elapsed = (Date.now() - startTime) / 1000;
-  const perStep = elapsed / done;
-  const remaining = Math.round(perStep * (total - done));
-  if(remaining <= 0) return "まもなく完了";
-  const m = Math.floor(remaining / 60);
-  const s = remaining % 60;
-  return `残り約 ${m > 0 ? m+"分" : ""}${s}秒`;
+function calcEta(startTime, done, total){
+  if(done===0) return "";
+  const elapsed=(Date.now()-startTime)/1000;
+  const remaining=Math.round(elapsed/done*(total-done));
+  if(remaining<=0) return "まもなく完了";
+  const m=Math.floor(remaining/60), s=remaining%60;
+  return `残り約 ${m>0?m+"分":""}${s}秒`;
 }
 
-async function loadBacktestLog() {
-  const tbody = document.getElementById("bt-log-body");
+async function loadBacktestLog(){
+  const tbody=document.getElementById("bt-log-body");
   try {
-    const data = await gasGet("getBacktestLog");
-    if(!data || !data.logs || data.logs.length === 0){
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text2)">バックテスト未実行</td></tr>';
+    const data=await gasGet("getBacktestLog");
+    if(!data||!data.logs||data.logs.length===0){
+      tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text2)">バックテスト未実行</td></tr>';
       return;
     }
-    tbody.innerHTML = [...data.logs].reverse().slice(0,30).map(r => {
-      const oldA  = parseFloat(r.oldAlpha) || 0;
-      const newA  = parseFloat(r.newAlpha) || 0;
-      const delta = newA - oldA;
-      const dc    = delta > 0.001 ? "var(--green)" : delta < -0.001 ? "var(--red)" : "var(--text2)";
-      const ac    = newA >= 0.80 ? "var(--green)" : newA >= 0.65 ? "var(--cyan)" : newA >= 0.55 ? "var(--amber)" : "var(--red)";
+    tbody.innerHTML=[...data.logs].reverse().slice(0,30).map(r=>{
+      const oldA=parseFloat(r.oldAlpha)||0;
+      const newA=parseFloat(r.newAlpha)||0;
+      const delta=newA-oldA;
+      const dc=delta>0.001?"var(--green)":delta<-0.001?"var(--red)":"var(--text2)";
+      const ac=newA>=0.80?"var(--green)":newA>=0.65?"var(--cyan)":newA>=0.55?"var(--amber)":"var(--red)";
       return `<tr>
         <td style="font-family:var(--font-mono);font-size:11px;color:var(--text2)">${r.execDate||"--"}</td>
         <td style="font-family:var(--font-mono);color:var(--text2)">${r.targetDate||"--"}</td>
@@ -1370,38 +1227,39 @@ async function loadBacktestLog() {
         <td style="font-family:var(--font-mono);font-weight:700;color:var(--cyan)">${r.axisHitRate||"--"}</td>
         <td style="font-family:var(--font-mono);color:var(--text2)">${oldA.toFixed(3)}</td>
         <td style="font-family:var(--font-mono);color:${ac};font-weight:700">${newA.toFixed(3)}</td>
-        <td style="font-family:var(--font-mono);color:${dc};font-weight:700">${delta>0?"+":""}${delta.toFixed(3)}</td>
-      </tr>`;
+        <td style="font-family:var(--font-mono);color:${dc};font-weight:700">${delta>0?"+":""}${delta.toFixed(3)}</td></tr>`;
     }).join("");
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー</td></tr>`;
   }
 }
 
-async function loadBacktestMaster() {
-  const tbody = document.getElementById("bt-master-body");
+async function loadBacktestMaster(){
+  const tbody=document.getElementById("bt-master-body");
   try {
-    const data = await gasGet("getMasterParams");
-    if(data.status !== "ok" || !data.data){
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー</td></tr>';
+    const data=await gasGet("getMasterParams");
+    if(data.status!=="ok"||!data.data){
+      tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー</td></tr>';
       return;
     }
-    tbody.innerHTML = data.data.map(p => {
-      const alpha = parseFloat(p["α補正値"]) || 0;
-      const ac    = alpha>=0.85?"var(--green)":alpha>=0.70?"var(--cyan)":alpha>=0.55?"var(--amber)":"var(--red)";
-      const evCols = [1,2,3,4,5,6].map(n => {
-        const ev = parseFloat(p[`${n}号艇EV`]) || 1.0;
-        const ec = ev>=1.2?"var(--green)":ev>=1.0?"var(--text)":ev>=0.8?"var(--amber)":"var(--red)";
+    tbody.innerHTML=data.data.map(p=>{
+      const alpha=parseFloat(p["α補正値"])||0;
+      const ac=alpha>=0.85?"var(--green)":alpha>=0.70?"var(--cyan)":alpha>=0.55?"var(--amber)":"var(--red)";
+      const evCols=[1,2,3,4,5,6].map(n=>{
+        const ev=parseFloat(p[`${n}号艇EV`])||1.0;
+        const ec=ev>=1.2?"var(--green)":ev>=1.0?"var(--text)":ev>=0.8?"var(--amber)":"var(--red)";
         return `<td style="font-family:var(--font-mono);color:${ec}">${ev.toFixed(3)}</td>`;
       }).join("");
       return `<tr>
         <td style="font-weight:700">${p["会場名"]||"--"}</td>
         <td style="font-size:12px;color:var(--text2)">${p["グループ"]||"--"}</td>
         <td style="font-family:var(--font-mono);color:${ac};font-weight:700">${alpha.toFixed(3)}</td>
-        ${evCols}
-      </tr>`;
+        ${evCols}</tr>`;
     }).join("");
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--red)">取得エラー</td></tr>`;
   }
 }
+</script>
+</body>
+</html>
