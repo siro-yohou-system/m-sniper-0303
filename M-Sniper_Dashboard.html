@@ -1054,19 +1054,70 @@ function stopBacktest(){
   btStopFlag=true;
   btLog("⏹ 停止リクエスト受付。現在の処理完了後に停止します...", "var(--amber)");
 }
-function btLog(msg, color="var(--text2)"){
+
+// ── ログ出力（ID付きで後から更新可能）
+function btLog(msg, color="var(--text2)", id=null){
   const el=document.getElementById("bt-realtime-log");
   const time=new Date().toLocaleTimeString("ja-JP",{hour12:false});
-  el.innerHTML+=`<div style="color:${color}"><span style="color:var(--border)">[${time}]</span> ${msg}</div>`;
+  const divId = id ? `id="${id}"` : "";
+  el.innerHTML+=`<div ${divId} style="color:${color}"><span style="color:var(--border)">[${time}]</span> ${msg}</div>`;
   el.scrollTop=el.scrollHeight;
 }
+
+// ── 既存ログ行を更新（IDで指定）
+function btLogUpdate(id, msg, color="var(--text2)"){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const time=new Date().toLocaleTimeString("ja-JP",{hour12:false});
+  el.style.color=color;
+  el.innerHTML=`<span style="color:var(--border)">[${time}]</span> ${msg}`;
+  document.getElementById("bt-realtime-log").scrollTop=99999;
+}
+
+// ── 進捗バー更新（経過時間も表示）
+let btStartTime=0;
 function btSetProgress(label, pct, eta=""){
   document.getElementById("bt-progress-label").textContent=label;
   document.getElementById("bt-progress-pct").textContent=Math.round(pct)+"%";
   document.getElementById("bt-progress-bar").style.width=pct+"%";
-  document.getElementById("bt-eta").textContent=eta;
+  const elapsed = btStartTime>0 ? Math.round((Date.now()-btStartTime)/1000) : 0;
+  const em = Math.floor(elapsed/60), es = elapsed%60;
+  const elapsedStr = elapsed>0 ? `経過: ${em>0?em+"分":""}${es}秒` : "";
+  document.getElementById("bt-eta").textContent=
+    [eta, elapsedStr].filter(Boolean).join("  |  ");
 }
+
+// ── カウントダウン付きsleep（ログIDを指定することで行を上書き更新）
+async function sleepWithCountdown(totalSec, logId){
+  const intervalMs=1000;
+  for(let remaining=totalSec; remaining>0; remaining--){
+    if(btStopFlag) break;
+    const bar="█".repeat(Math.round((totalSec-remaining)/totalSec*12))+"░".repeat(Math.round(remaining/totalSec*12));
+    btLogUpdate(logId,
+      `  ⏳ 待機中 [${bar}] <span style="color:var(--cyan);font-weight:700">${remaining}秒</span>`,
+      "var(--text2)"
+    );
+    await new Promise(r=>setTimeout(r,intervalMs));
+  }
+}
+
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// ── GAS処理中アニメーション（gasPostの間に表示）
+let btSpinTimer=null;
+function btStartSpinner(logId, label){
+  const frames=["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"];
+  let i=0;
+  btSpinTimer=setInterval(()=>{
+    const elapsed=btStartTime>0?Math.round((Date.now()-btStartTime)/1000):0;
+    btLogUpdate(logId,
+      `  ${frames[i%frames.length]} <span style="color:var(--cyan)">${label}</span> GAS処理中... (${elapsed}秒経過)`,
+      "var(--text2)"
+    );
+    i++;
+  }, 150);
+}
+function btStopSpinner(){ if(btSpinTimer){ clearInterval(btSpinTimer); btSpinTimer=null; } }
 
 async function startAutoBacktest(){
   if(btRunning){ showToast("実行中です"); return; }
@@ -1077,7 +1128,7 @@ async function startAutoBacktest(){
   const venueFilter = document.getElementById("bt-venue").value;
   const sourceMode  = document.getElementById("bt-source").value;
 
-  btRunning=true; btStopFlag=false;
+  btRunning=true; btStopFlag=false; btStartTime=Date.now();
   document.getElementById("bt-run-btn").disabled=true;
   document.getElementById("bt-stop-btn").disabled=false;
   document.getElementById("bt-stop-btn").style.opacity="1";
@@ -1089,14 +1140,11 @@ async function startAutoBacktest(){
     let venues=[];
 
     if(venueFilter !== "ALL"){
-      // 単一会場指定
       const logData = await gasGet("getMasterParams");
       const found   = (logData.data||[]).find(p=>String(p["会場ID"])===venueFilter);
       venues = [{ venueId: venueFilter, venueName: found ? found["会場名"] : venueFilter }];
 
     } else if(sourceMode === "all24"){
-      // 全24会場を直接指定（LOGに依存しない）
-      // [修正B] GASのVENUE_LISTと同じ順番
       const all24 = [
         {venueId:"01#",venueName:"桐生"},{venueId:"02#",venueName:"戸田"},
         {venueId:"03#",venueName:"江戸川"},{venueId:"04#",venueName:"平和島"},
@@ -1116,12 +1164,9 @@ async function startAutoBacktest(){
       venues = all24;
 
     } else {
-      // EXECUTION_LOGから会場リストを取得（旧来モード）
       btLog("📋 EXECUTION_LOGから対象会場を取得中...", "var(--text2)");
       const logData = await gasGet("getLog");
-      if(logData.status!=="ok"){
-        btLog("❌ ログ取得失敗", "var(--red)"); return;
-      }
+      if(logData.status!=="ok"){ btLog("❌ ログ取得失敗", "var(--red)"); return; }
       const todayLogs = logData.logs.filter(l=>{
         if(!l.date) return false;
         const d=new Date(l.date);
@@ -1138,92 +1183,137 @@ async function startAutoBacktest(){
       });
     }
 
-    if(venues.length===0){
-      btLog("⚠️ 対象会場がありません", "var(--amber)"); return;
-    }
-    btLog(`📍 対象: ${venues.length}会場（${venues.map(v=>v.venueName).join("、")}）`, "var(--cyan)");
+    if(venues.length===0){ btLog("⚠️ 対象会場がありません", "var(--amber)"); return; }
 
     const totalSteps=venues.length*2;
     let stepDone=0;
-    const startTime=Date.now();
+
+    // 全体の見通しを先に表示
+    btLog(`📍 対象: ${venues.length}会場 × 2バッチ = ${totalSteps}ステップ`, "var(--cyan)");
+    btLog(`📌 ${venues.map((v,i)=>`${i+1}.${v.venueName}`).join("  ")}`, "var(--text2)");
+    btLog(`⏱ 1会場あたり約2分（GAS処理60秒×2＋待機55秒）の見込み`, "var(--text2)");
+    btLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, "var(--border)");
 
     for(const venue of venues){
       if(btStopFlag){ btLog("⏹ 停止", "var(--amber)"); break; }
-      btLog(`\n🏁 ${venue.venueName}（${venue.venueId}）`, "var(--cyan)");
 
-      // R1〜R6
-      btLog(`  📊 R1〜R6 解析中...`, "var(--text2)");
-      btSetProgress(`${venue.venueName} R1〜R6`, stepDone/totalSteps*100, calcEta(startTime,stepDone,totalSteps));
+      const venueIdx = venues.indexOf(venue)+1;
+      btLog(``, "var(--border)"); // 空行
+      btLog(`【${venueIdx}/${venues.length}】🏁 ${venue.venueName}（${venue.venueId}）`, "var(--cyan)");
+      btSetProgress(`[${venueIdx}/${venues.length}] ${venue.venueName} — R1〜R6`, stepDone/totalSteps*100, calcEta(btStartTime,stepDone,totalSteps));
 
-      const res1 = await gasPost({
-        action:"runBacktestRange", targetDate:hd,
-        targetVenue:venue.venueId, raceFrom:1, raceTo:6
-      });
+      // ── R1〜R6: スピナー付きで送信
+      const spin1Id="bt-spin-"+Date.now();
+      btLog(`  ⠋ R1〜R6 GAS送信中...`, "var(--text2)", spin1Id);
+      btStartSpinner(spin1Id, "R1〜R6");
+
+      let res1;
+      try {
+        res1 = await gasPost({
+          action:"runBacktestRange", targetDate:hd,
+          targetVenue:venue.venueId, raceFrom:1, raceTo:6
+        });
+      } finally {
+        btStopSpinner();
+      }
       stepDone++;
 
-      if(res1.status==="ok"){
-        const detailStr = res1.details ? " ["+res1.details.map(d=>
-          d.hit ? `<span style="color:var(--green)">R${d.raceNo}✓</span>`
-                : `<span style="color:var(--red)">R${d.raceNo}✗</span>`
-        ).join(" ")+"]" : "";
+      if(res1 && res1.status==="ok"){
         if(res1.processed===0){
-          btLog(`  ⚪ 開催なし（スキップ）`, "var(--text2)");
+          btLogUpdate(spin1Id, `  ⚪ R1〜R6 開催なし（スキップ）`, "var(--text2)");
         } else {
-          btLog(`  ✅ 完了: ${res1.hits}/${res1.processed}的中${detailStr}`, "var(--text)");
+          const detailStr = (res1.details||[]).map(d=>
+            d.status==="完了"
+              ? (d.hit
+                  ? `<span style="color:var(--green)">R${d.raceNo}✓(${d.predicted}→${d.actual})</span>`
+                  : `<span style="color:var(--red)">R${d.raceNo}✗(予${d.predicted}/実${d.actual})</span>`)
+              : `<span style="color:var(--text2)">R${d.raceNo}:${d.status}</span>`
+          ).join(" ");
+          btLogUpdate(spin1Id,
+            `  ✅ R1〜R6完了: <span style="color:var(--cyan);font-weight:700">${res1.hits}/${res1.processed}的中</span>  ${detailStr}`,
+            "var(--text)"
+          );
         }
       } else {
-        btLog(`  ❌ エラー: ${res1.message||"不明"}`, "var(--red)");
+        btLogUpdate(spin1Id, `  ❌ R1〜R6エラー: ${res1&&res1.message||"不明"}`, "var(--red)");
       }
 
-      btLog(`  ⏳ 次のバッチまで35秒待機中...`, "var(--text2)");
-      await sleep(35000);
+      // ── 35秒カウントダウン待機
+      if(!btStopFlag){
+        const wait1Id="bt-wait1-"+Date.now();
+        btLog(`  ⏳ 待機中...`, "var(--text2)", wait1Id);
+        await sleepWithCountdown(35, wait1Id);
+        btLogUpdate(wait1Id, `  ✔ 待機完了`, "var(--border)");
+      }
       if(btStopFlag){ btLog("⏹ 停止", "var(--amber)"); break; }
 
-      // R7〜R12
-      btLog(`  📊 R7〜R12 解析中...`, "var(--text2)");
-      btSetProgress(`${venue.venueName} R7〜R12`, stepDone/totalSteps*100, calcEta(startTime,stepDone,totalSteps));
+      // ── R7〜R12: スピナー付きで送信
+      btSetProgress(`[${venueIdx}/${venues.length}] ${venue.venueName} — R7〜R12`, stepDone/totalSteps*100, calcEta(btStartTime,stepDone,totalSteps));
+      const spin2Id="bt-spin2-"+Date.now();
+      btLog(`  ⠋ R7〜R12 GAS送信中...`, "var(--text2)", spin2Id);
+      btStartSpinner(spin2Id, "R7〜R12");
 
-      const res2 = await gasPost({
-        action:"runBacktestRange", targetDate:hd,
-        targetVenue:venue.venueId, raceFrom:7, raceTo:12
-      });
+      let res2;
+      try {
+        res2 = await gasPost({
+          action:"runBacktestRange", targetDate:hd,
+          targetVenue:venue.venueId, raceFrom:7, raceTo:12
+        });
+      } finally {
+        btStopSpinner();
+      }
       stepDone++;
 
-      if(res2.status==="ok"){
-        const detailStr = res2.details ? " ["+res2.details.map(d=>
-          d.hit ? `<span style="color:var(--green)">R${d.raceNo}✓</span>`
-                : `<span style="color:var(--red)">R${d.raceNo}✗</span>`
-        ).join(" ")+"]" : "";
+      if(res2 && res2.status==="ok"){
         if(res2.processed===0){
-          btLog(`  ⚪ 開催なし（スキップ）`, "var(--text2)");
+          btLogUpdate(spin2Id, `  ⚪ R7〜R12 開催なし（スキップ）`, "var(--text2)");
         } else {
-          btLog(`  ✅ 完了: ${res2.hits}/${res2.processed}的中${detailStr}`, "var(--text)");
+          const detailStr = (res2.details||[]).map(d=>
+            d.status==="完了"
+              ? (d.hit
+                  ? `<span style="color:var(--green)">R${d.raceNo}✓(${d.predicted}→${d.actual})</span>`
+                  : `<span style="color:var(--red)">R${d.raceNo}✗(予${d.predicted}/実${d.actual})</span>`)
+              : `<span style="color:var(--text2)">R${d.raceNo}:${d.status}</span>`
+          ).join(" ");
+          btLogUpdate(spin2Id,
+            `  ✅ R7〜R12完了: <span style="color:var(--cyan);font-weight:700">${res2.hits}/${res2.processed}的中</span>  ${detailStr}`,
+            "var(--text)"
+          );
         }
       } else {
-        btLog(`  ❌ エラー: ${res2.message||"不明"}`, "var(--red)");
+        btLogUpdate(spin2Id, `  ❌ R7〜R12エラー: ${res2&&res2.message||"不明"}`, "var(--red)");
       }
 
-      btSetProgress(`${venue.venueName} 完了`, stepDone/totalSteps*100, calcEta(startTime,stepDone,totalSteps));
+      btSetProgress(`[${venueIdx}/${venues.length}] ${venue.venueName} 完了`, stepDone/totalSteps*100, calcEta(btStartTime,stepDone,totalSteps));
 
-      if(venues.indexOf(venue)<venues.length-1&&!btStopFlag){
-        btLog(`  ⏳ 次の会場まで20秒待機中...`, "var(--text2)");
-        await sleep(20000);
+      // ── 会場間20秒カウントダウン（最後の会場はスキップ）
+      if(venues.indexOf(venue)<venues.length-1 && !btStopFlag){
+        const wait2Id="bt-wait2-"+Date.now();
+        btLog(`  ⏳ 次の会場まで待機...`, "var(--text2)", wait2Id);
+        await sleepWithCountdown(20, wait2Id);
+        btLogUpdate(wait2Id, `  ✔ 待機完了`, "var(--border)");
       }
     }
 
     if(!btStopFlag){
       btSetProgress("完了！", 100, "");
-      btLog(`\n🎉 全バックテスト完了！ログを更新中...`, "var(--green)");
-      await sleep(2000);
+      const totalSec=Math.round((Date.now()-btStartTime)/1000);
+      const tm=Math.floor(totalSec/60), ts=totalSec%60;
+      btLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, "var(--border)");
+      btLog(`🎉 全バックテスト完了！ 総処理時間: ${tm>0?tm+"分":""}${ts}秒`, "var(--green)");
+      btLog(`📊 ログ・MASTER_PARAMSを更新中...`, "var(--text2)");
+      await sleep(1500);
       await loadBacktestLog();
       await loadBacktestMaster();
       showToast("✅ バックテスト完了！");
     }
 
   } catch(e) {
+    btStopSpinner();
     btLog(`❌ エラー: ${e.message}`, "var(--red)");
-    btLog(`💡 GASの実行ログを確認してください（GASエディタ → 実行 → 実行数）`, "var(--amber)");
+    btLog(`💡 GASエディタ → 実行 → 実行数 でログを確認してください`, "var(--amber)");
   } finally {
+    btStopSpinner();
     btRunning=false; btStopFlag=false;
     document.getElementById("bt-run-btn").disabled=false;
     document.getElementById("bt-stop-btn").disabled=true;
@@ -1232,7 +1322,7 @@ async function startAutoBacktest(){
 }
 
 function calcEta(startTime, done, total){
-  if(done===0) return "";
+  if(done===0) return "算出中...";
   const elapsed=(Date.now()-startTime)/1000;
   const remaining=Math.round(elapsed/done*(total-done));
   if(remaining<=0) return "まもなく完了";
