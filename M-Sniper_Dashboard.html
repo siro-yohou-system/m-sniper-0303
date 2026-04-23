@@ -356,11 +356,12 @@ select:focus{border-color:var(--cyan)}
             <option value="23#">唐津</option><option value="24#">大村</option>
           </select>
         </div>
-        <!-- [修正D] 会場フィルタ「全会場」時の会場ソース選択 -->
+        <!-- 会場フィルタ「全会場」時の会場ソース選択 -->
         <div id="bt-source-wrap">
           <div style="font-size:11px;color:var(--text2);margin-bottom:4px">全会場モード時の取得元</div>
           <select id="bt-source"
             style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none">
+            <option value="schedule" selected>📅 開催会場を自動判定（推奨）</option>
             <option value="log">EXECUTION_LOGの会場</option>
             <option value="all24">全24会場を直接取得</option>
           </select>
@@ -502,7 +503,31 @@ function gasGet(action) {
   });
 }
 
-// [修正D] gasPost → postViaGet（JSONP）に切り替え
+// [追加] 追加パラメータ付きgasGet（getVenuesByDate用）
+function gasGetWithParam(action, param) {
+  return new Promise((resolve, reject) => {
+    const cbName = "_cbgp_" + action.replace(/\W/g,"_") + "_" + Date.now();
+    const script = document.createElement("script");
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if(document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error("タイムアウト: " + action));
+    }, 20000);
+    window[cbName] = (data) => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if(document.body.contains(script)) document.body.removeChild(script);
+      resolve(data);
+    };
+    script.src = `${GAS_URL}?action=${action}&param=${encodeURIComponent(param)}&callback=${cbName}`;
+    script.onerror = () => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error("エラー: " + action));
+    };
+    document.body.appendChild(script);
+  });
+}
 // URLの長さ上限（安全マージン: 7000文字）を超える場合はエラーを出す
 function gasPost(body) {
   return new Promise((resolve, reject) => {
@@ -1137,9 +1162,36 @@ async function startAutoBacktest(){
     // 会場リストを決定
     let venues=[];
     if(venueFilter !== "ALL"){
+      // 個別会場指定
       const md=await gasGet("getMasterParams");
       const found=(md.data||[]).find(p=>String(p["会場ID"])===venueFilter);
       venues=[{venueId:venueFilter, venueName:found?found["会場名"]:venueFilter}];
+
+    } else if(sourceMode==="schedule"){
+      // ── 推奨：RACE_SCHEDULEから開催会場を自動判定
+      btLog("📅 RACE_SCHEDULEから開催会場を取得中...", "var(--text2)");
+      const schedData = await gasGet("getVenuesByDate_" + hd);
+      // ↑ gasGetはactionパラメータをそのまま使うので
+      //   GAS側でパースできるよう別途呼び方を工夫する
+      // → gasGetの代わりに専用関数で呼ぶ
+      const schRes = await gasGetWithParam("getVenuesByDate", hd);
+
+      if(schRes && schRes.status==="ok" && schRes.venues && schRes.venues.length>0){
+        venues = schRes.venues; // [{venueId:"01#", venueName:"桐生"}, ...]
+        btLog(`✅ 開催会場を取得: ${venues.length}会場（${venues.map(v=>v.venueName).join("、")}）`, "var(--cyan)");
+      } else {
+        btLog("⚠️ RACE_SCHEDULEにデータなし。直接boatrace.jpから取得します...", "var(--amber)");
+        // フォールバック: GASのfetchVenueScheduleForDateを呼ぶ
+        const fbRes = await gasGetWithParam("fetchVenuesByDate", hd);
+        if(fbRes && fbRes.status==="ok" && fbRes.venues && fbRes.venues.length>0){
+          venues = fbRes.venues;
+          btLog(`✅ boatrace.jpから取得: ${venues.length}会場（${venues.map(v=>v.venueName).join("、")}）`, "var(--cyan)");
+        } else {
+          btLog("❌ 開催会場の取得に失敗しました。会場を個別指定してください。", "var(--red)");
+          return;
+        }
+      }
+
     } else if(sourceMode==="all24"){
       venues=[
         {venueId:"01#",venueName:"桐生"},{venueId:"02#",venueName:"戸田"},
@@ -1156,7 +1208,9 @@ async function startAutoBacktest(){
         {venueId:"23#",venueName:"唐津"},{venueId:"24#",venueName:"大村"},
       ];
       btLog("📋 全24会場を直接取得モード", "var(--text2)");
+
     } else {
+      // LOGモード
       btLog("📋 EXECUTION_LOGから対象会場を取得中...", "var(--text2)");
       const logData=await gasGet("getLog");
       if(logData.status!=="ok"){ btLog("❌ ログ取得失敗","var(--red)"); return; }
