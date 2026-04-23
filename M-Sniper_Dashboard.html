@@ -452,6 +452,11 @@ setInterval(() => {
 document.getElementById("clock").textContent =
   new Date().toLocaleTimeString("ja-JP",{hour12:false});
 
+// ── [修正1] ページ読み込み完了後にダッシュボードを初期ロード
+document.addEventListener("DOMContentLoaded", () => {
+  loadDashboard();
+});
+
 // ── ページ切り替え
 function showPage(id, btn) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
@@ -500,28 +505,42 @@ function gasGet(action) {
 }
 
 // [修正D] gasPost → postViaGet（JSONP）に切り替え
+// URLの長さ上限（安全マージン: 7000文字）を超える場合はエラーを出す
 function gasPost(body) {
   return new Promise((resolve, reject) => {
     const action = body.action || "unknown";
     const cbName = "_cbp_" + action.replace(/\W/g,"_") + "_" + Date.now();
     const script = document.createElement("script");
-    const encoded = encodeURIComponent(JSON.stringify(body));
+
+    // JSONをエンコードしてURL長をチェック
+    const jsonStr  = JSON.stringify(body);
+    const encoded  = encodeURIComponent(jsonStr);
+    const fullUrl  = `${GAS_URL}?action=postViaGet&data=${encoded}&callback=${cbName}`;
+
+    if(fullUrl.length > 8000) {
+      reject(new Error(`リクエストデータが大きすぎます (${fullUrl.length}文字)。GASに直接アクセスしてください。`));
+      return;
+    }
+
     const timeout = setTimeout(() => {
       delete window[cbName];
       if(document.body.contains(script)) document.body.removeChild(script);
-      reject(new Error("POSTタイムアウト: " + action));
-    }, 60000); // バックテストは時間がかかるので60秒
+      reject(new Error("POSTタイムアウト: " + action + "（GAS処理中の可能性があります）"));
+    }, 90000); // バックテストは最大90秒
+
     window[cbName] = (data) => {
       clearTimeout(timeout);
       delete window[cbName];
       if(document.body.contains(script)) document.body.removeChild(script);
       resolve(data);
     };
-    script.src = `${GAS_URL}?action=postViaGet&data=${encoded}&callback=${cbName}`;
+
+    script.src = fullUrl;
     script.onerror = () => {
       clearTimeout(timeout);
       delete window[cbName];
-      reject(new Error("POST(ViaGet)エラー: " + action));
+      if(document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error("POST(ViaGet)エラー: " + action + "（GASのデプロイURLを確認してください）"));
     };
     document.body.appendChild(script);
   });
@@ -878,25 +897,42 @@ function renderChartTable(stats) {
 
 // ━━━ 照合分析 ━━━
 async function loadMatching() {
+  // 読み込み中表示
+  document.getElementById("miss-chart-wrap").innerHTML='<div class="loading">データ取得中</div>';
+  document.getElementById("weather-matrix-body").innerHTML='<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">読み込み中...</td></tr>';
+  document.getElementById("matching-table-body").innerHTML='<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">読み込み中...</td></tr>';
+
   try {
     const data = await gasGet("getPatternStats");
-    if(data.status!=="ok"){
-      document.getElementById("miss-chart-wrap").innerHTML='<div style="color:var(--red);padding:20px">データ取得エラー</div>';
+
+    // GASからエラーが返った場合
+    if(!data || data.status !== "ok") {
+      const msg = data && data.error ? data.error : "GASからエラーが返りました";
+      document.getElementById("miss-chart-wrap").innerHTML=`<div style="color:var(--red);padding:20px">⚠️ ${msg}<br><small style="color:var(--text2)">PATTERN_ANALYSISシートが存在しない場合は「進化①シートセットアップ」を実行してください。</small></div>`;
+      document.getElementById("weather-matrix-body").innerHTML='<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">データなし</td></tr>';
+      document.getElementById("matching-table-body").innerHTML='<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">データなし</td></tr>';
       return;
     }
-    const s=data.summary||{};
-    const total=(s.totalHit||0)+(s.totalMiss||0);
+
+    // サマリー（nullセーフ）
+    const s = data.summary || {};
+    const total = (s.totalHit||0) + (s.totalMiss||0);
     document.getElementById("mt-total").textContent    = total;
     document.getElementById("mt-hitrate").textContent  = (s.hitRate||0)+"%";
     document.getElementById("mt-hits").textContent     = `${s.totalHit||0} / ${total}`;
     document.getElementById("mt-axisrate").textContent = (s.axisHitRate||0)+"%";
     document.getElementById("mt-axismiss").textContent = (s.axisMissRate||0)+"%";
     document.getElementById("mt-himomiss").textContent = (s.himoMissRate||0)+"%";
+
     renderMissChart(data.missStats||[]);
     renderWeatherMatrix(data.venueStats||[]);
     renderMatchingTable(data.recentPatterns||[]);
+
   } catch(e) {
-    document.getElementById("miss-chart-wrap").innerHTML=`<div style="color:var(--red);padding:20px">取得エラー: ${e.message}</div>`;
+    const errMsg = e.message || String(e);
+    document.getElementById("miss-chart-wrap").innerHTML=`<div style="color:var(--red);padding:20px">⚠️ 取得エラー: ${errMsg}</div>`;
+    document.getElementById("weather-matrix-body").innerHTML=`<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--red)">エラー</td></tr>`;
+    document.getElementById("matching-table-body").innerHTML=`<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--red)">エラー</td></tr>`;
   }
 }
 
@@ -1187,6 +1223,7 @@ async function startAutoBacktest(){
 
   } catch(e) {
     btLog(`❌ エラー: ${e.message}`, "var(--red)");
+    btLog(`💡 GASの実行ログを確認してください（GASエディタ → 実行 → 実行数）`, "var(--amber)");
   } finally {
     btRunning=false; btStopFlag=false;
     document.getElementById("bt-run-btn").disabled=false;
