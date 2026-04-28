@@ -788,9 +788,24 @@ async function loadSettings() {
     document.getElementById("s-notify-email").checked = method==="email"||method==="both";
     document.getElementById("s-notify-line").checked  = method==="line" ||method==="both";
     document.getElementById("s-notify-all").checked          = s.notify_all==="true"||s.notify_all===true;
-    document.getElementById("s-notify-threshold-on").checked = s.notify_threshold_on!=="false";
-    document.getElementById("s-notify-hit").checked          = s.notify_hit!=="false";
-    document.getElementById("s-notify-miss").checked         = s.notify_miss==="true"||s.notify_miss===true;
+    
+    // notify_threshold_on
+    document.getElementById("s-notify-threshold-on").checked =
+      s.notify_threshold_on !== false &&
+      s.notify_threshold_on !== "false" &&
+      s.notify_threshold_on !== "FALSE";
+
+    // notify_all
+    document.getElementById("s-notify-all").checked =
+      s.notify_all === true || s.notify_all === "true" || s.notify_all === "TRUE";
+    
+    // notify_hit
+    document.getElementById("s-notify-hit").checked =
+    s.notify_hit === true || s.notify_hit === "true" || s.notify_hit === "TRUE";
+
+    // notify_miss
+    document.getElementById("s-notify-miss").checked =
+      s.notify_miss === true || s.notify_miss === "true" || s.notify_miss === "TRUE";    
     const th=Number(s.notify_threshold)||70;
     document.getElementById("s-threshold").value=th;
     document.getElementById("s-threshold-val").textContent=th+"%";
