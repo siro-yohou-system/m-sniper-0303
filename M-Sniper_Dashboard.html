@@ -272,6 +272,27 @@ select:focus{border-color:var(--cyan)}
           <div class="setting-label">不的中報告を送信<small>不的中のレース結果も通知</small></div>
           <label class="toggle"><input type="checkbox" id="s-notify-miss"><span class="toggle-slider"></span></label>
         </div>
+
+        <div class="setting-row">
+          <div class="setting-label">万舟トリガー通知
+            <small>10k-TRIGGER・GOLD_DUSTレースを通知する</small>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="s-notify-mantoku">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-row" id="mantoku-threshold-row">
+          <div class="setting-label">万舟通知スコア下限
+            <small>この点数以上の万舟トリガーのみ通知</small>
+          </div>
+          <input type="range" id="s-mantoku-threshold"
+            min="0" max="60" step="5" value="20"
+            oninput="document.getElementById('s-mantoku-threshold-val').textContent=this.value+'点'">
+          <div class="range-val" id="s-mantoku-threshold-val">20点</div>
+        </div>
+
+        
       </div>
       <div class="setting-group">
         <div class="setting-group-title">解析パラメータ</div>
@@ -829,6 +850,18 @@ async function loadSettings() {
     document.getElementById("gas-status").textContent="接続OK";
     document.getElementById("gas-status").className="badge badge-hit";
     document.getElementById("last-fetch").textContent=new Date().toLocaleTimeString("ja-JP");
+
+    // 既存のloadSettings内の末尾に追加
+    const nm = s.notify_mantoku === true || 
+               s.notify_mantoku === "true" || 
+               s.notify_mantoku === "TRUE";
+    document.getElementById("s-notify-mantoku").checked = nm;
+
+    const mt = Number(s.mantoku_threshold) || 20;
+    document.getElementById("s-mantoku-threshold").value = mt;
+    document.getElementById("s-mantoku-threshold-val").textContent = mt + "点";
+    // // // // // // 
+    
   } catch(e) {
     document.getElementById("gas-status").textContent="接続エラー";
     document.getElementById("gas-status").className="badge badge-miss";
@@ -852,6 +885,10 @@ async function saveSettings() {
     consecutive_loss_limit: Number(document.getElementById("s-loss-limit").value),
     result_delay_min:       Number(document.getElementById("s-result-delay").value),
     daily_report_hour:      Number(document.getElementById("s-report-hour").value),
+    // 既存のsettingsオブジェクトに追加
+    notify_mantoku:      document.getElementById("s-notify-mantoku").checked,
+    mantoku_threshold:   Number(document.getElementById("s-mantoku-threshold").value),
+    
   };
   try {
     const res = await gasPost({action:"saveSettings", settings});
