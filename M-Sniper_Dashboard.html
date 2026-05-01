@@ -1562,61 +1562,52 @@ async function loadBacktestMaster(){
 async function loadBetTypeStats() {
   const wrap = document.getElementById("bettype-stats");
   try {
-    const data = await gasGet("getLog");
-    if (data.status !== "ok" || !data.logs) {
+    const data = await gasGet("getBetTypeStats");
+    if (data.status !== "ok" || !data.stats) {
       wrap.innerHTML = '<div style="color:var(--text2);padding:10px">データなし</div>';
       return;
     }
 
-    const stats = {};
-    data.logs.forEach(l => {
-      const bet     = String(l.bet || "");
-      const isHit   = l.result === "的中";
-      const isMiss  = l.result === "不的中";
-      if (!isHit && !isMiss) return;
+    wrap.innerHTML = [...data.stats]
+      .sort((a, b) => b.roi - a.roi)
+      .map(s => {
+        const rateCol = s.rate >= 25 ? "var(--green)" :
+                        s.rate >= 15 ? "var(--amber)" : "var(--red)";
+        const roiCol  = s.roi >= 300 ? "var(--green)" :
+                        s.roi >= 100 ? "var(--amber)" : "var(--red)";
+        const profit  = s.profit >= 0
+          ? `+${s.profit.toLocaleString()}円`
+          : `${s.profit.toLocaleString()}円`;
+        const profitCol = s.profit >= 0 ? "var(--green)" : "var(--red)";
 
-      const type =
-        bet.includes("万舟トリガー")  ? "🎰万舟" :
-        bet.includes("GOLD_DUST")     ? "🎰万舟" :
-        bet.includes("特異点逆目")    ? "⚡特異点" :
-        bet.includes("複勝共鳴")      ? "🎯2連複" :
-        bet.includes("3連複BOX")      ? "📦3連複" : "📋その他";
-
-      if (!stats[type]) stats[type] = { total:0, hit:0 };
-      stats[type].total++;
-      if (isHit) stats[type].hit++;
-    });
-
-    wrap.innerHTML = Object.entries(stats)
-      .sort((a,b) => {
-        const ra = a[1].hit/a[1].total;
-        const rb = b[1].hit/b[1].total;
-        return rb - ra;
-      })
-      .map(([type, s]) => {
-        const rate = s.total > 0
-          ? Math.round(s.hit/s.total*1000)/10 : 0;
-        const col  = rate >= 25 ? "var(--green)" :
-                     rate >= 15 ? "var(--amber)" : "var(--red)";
         return `
           <div style="display:flex;align-items:center;gap:12px;
-            padding:8px 0;border-bottom:1px solid var(--border)">
+            padding:10px 0;border-bottom:1px solid var(--border)">
             <div style="min-width:80px;font-size:13px;font-weight:700">
-              ${type}
+              ${s.type}
             </div>
             <div style="flex:1">
               <div class="score-bar">
                 <div class="score-track">
                   <div class="score-fill"
-                    style="width:${Math.min(rate*2,100)}%;background:${col}">
+                    style="width:${Math.min(s.rate*2,100)}%;background:${rateCol}">
                   </div>
                 </div>
                 <div style="font-family:var(--font-mono);font-size:13px;
-                  color:${col};min-width:48px">${rate}%</div>
+                  color:${rateCol};min-width:48px">${s.rate}%</div>
+              </div>
+              <div style="font-size:11px;color:var(--text2);margin-top:3px">
+                回収率:
+                <span style="color:${roiCol};font-weight:700">${s.roi}%</span>
+                &nbsp;|&nbsp;
+                収支:
+                <span style="color:${profitCol};font-weight:700">${profit}</span>
               </div>
             </div>
             <div style="font-family:var(--font-mono);font-size:12px;
-              color:var(--text2)">${s.hit}/${s.total}R</div>
+              color:var(--text2);text-align:right">
+              ${s.hit}/${s.total}R
+            </div>
           </div>`;
       }).join("") ||
       '<div style="color:var(--text2);padding:10px">データなし</div>';
