@@ -899,7 +899,16 @@ async function loadSettings() {
     document.getElementById("s-mantoku-threshold").value = mt;
     document.getElementById("s-mantoku-threshold-val").textContent = mt + "点";
     // // // // // // 
-    
+    // 買い目タイプ別通知設定の読み込み
+    document.getElementById("s-notify-singularity").checked =
+      s.notify_singularity === true || s.notify_singularity === "true" || s.notify_singularity === "TRUE";
+    document.getElementById("s-notify-exacta").checked =
+      s.notify_exacta === true || s.notify_exacta === "true" || s.notify_exacta === "TRUE";
+    document.getElementById("s-notify-trio").checked =
+      s.notify_trio === true || s.notify_trio === "true" || s.notify_trio === "TRUE";
+    const bt = Number(s.bettype_threshold) || 70;
+    document.getElementById("s-bettype-threshold").value = bt;
+    document.getElementById("s-bettype-threshold-val").textContent = bt + "点";
   } catch(e) {
     document.getElementById("gas-status").textContent="接続エラー";
     document.getElementById("gas-status").className="badge badge-miss";
@@ -926,7 +935,10 @@ async function saveSettings() {
     // 既存のsettingsオブジェクトに追加
     notify_mantoku:      document.getElementById("s-notify-mantoku").checked,
     mantoku_threshold:   Number(document.getElementById("s-mantoku-threshold").value),
-    
+    notify_singularity: document.getElementById("s-notify-singularity").checked,
+    notify_exacta:      document.getElementById("s-notify-exacta").checked,
+    notify_trio:        document.getElementById("s-notify-trio").checked,
+    bettype_threshold:  Number(document.getElementById("s-bettype-threshold").value),
   };
   try {
     const res = await gasPost({action:"saveSettings", settings});
