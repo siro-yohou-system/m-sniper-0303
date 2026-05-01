@@ -668,6 +668,7 @@ async function loadDashboard() {
     if(setData.status==="ok")   document.getElementById("m-threshold").textContent=(setData.settings.notify_threshold||70)+"%";
     document.getElementById("gas-status").textContent="接続OK";
     document.getElementById("last-fetch").textContent=new Date().toLocaleTimeString("ja-JP");
+    loadBetTypeStats();
   } catch(e) {
     showAlert("GASへの接続に失敗しました: " + e.message);
   }
@@ -1558,6 +1559,72 @@ async function loadBacktestMaster(){
   }
 }
 
+async function loadBetTypeStats() {
+  const wrap = document.getElementById("bettype-stats");
+  try {
+    const data = await gasGet("getLog");
+    if (data.status !== "ok" || !data.logs) {
+      wrap.innerHTML = '<div style="color:var(--text2);padding:10px">データなし</div>';
+      return;
+    }
+
+    const stats = {};
+    data.logs.forEach(l => {
+      const bet     = String(l.bet || "");
+      const isHit   = l.result === "的中";
+      const isMiss  = l.result === "不的中";
+      if (!isHit && !isMiss) return;
+
+      const type =
+        bet.includes("万舟トリガー")  ? "🎰万舟" :
+        bet.includes("GOLD_DUST")     ? "🎰万舟" :
+        bet.includes("特異点逆目")    ? "⚡特異点" :
+        bet.includes("複勝共鳴")      ? "🎯2連複" :
+        bet.includes("3連複BOX")      ? "📦3連複" : "📋その他";
+
+      if (!stats[type]) stats[type] = { total:0, hit:0 };
+      stats[type].total++;
+      if (isHit) stats[type].hit++;
+    });
+
+    wrap.innerHTML = Object.entries(stats)
+      .sort((a,b) => {
+        const ra = a[1].hit/a[1].total;
+        const rb = b[1].hit/b[1].total;
+        return rb - ra;
+      })
+      .map(([type, s]) => {
+        const rate = s.total > 0
+          ? Math.round(s.hit/s.total*1000)/10 : 0;
+        const col  = rate >= 25 ? "var(--green)" :
+                     rate >= 15 ? "var(--amber)" : "var(--red)";
+        return `
+          <div style="display:flex;align-items:center;gap:12px;
+            padding:8px 0;border-bottom:1px solid var(--border)">
+            <div style="min-width:80px;font-size:13px;font-weight:700">
+              ${type}
+            </div>
+            <div style="flex:1">
+              <div class="score-bar">
+                <div class="score-track">
+                  <div class="score-fill"
+                    style="width:${Math.min(rate*2,100)}%;background:${col}">
+                  </div>
+                </div>
+                <div style="font-family:var(--font-mono);font-size:13px;
+                  color:${col};min-width:48px">${rate}%</div>
+              </div>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:12px;
+              color:var(--text2)">${s.hit}/${s.total}R</div>
+          </div>`;
+      }).join("") ||
+      '<div style="color:var(--text2);padding:10px">データなし</div>';
+  } catch(e) {
+    wrap.innerHTML = `<div style="color:var(--red);padding:10px">エラー: ${e.message}</div>`;
+  }
+}
+  
 // ── 初期ロード（確実に実行）
 window.addEventListener("load", () => { loadDashboard(); });
 </script>
