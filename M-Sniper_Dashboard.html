@@ -311,6 +311,44 @@ select:focus{border-color:var(--cyan)}
           <input type="range" id="s-tenkake" min="4" max="10" step="1" value="6" oninput="document.getElementById('s-tenkake-val').textContent=this.value">
           <div class="range-val" id="s-tenkake-val">6</div>
         </div>
+
+        <div class="setting-group-title" style="margin-top:16px">買い目タイプ別通知</div>
+        <div class="setting-row">
+          <div class="setting-label">特異点逆目を通知
+            <small>X-X-ALL形式のレース</small>
+          </div>
+          <label class="toggle">
+          <input type="checkbox" id="s-notify-singularity">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">2連複を通知
+          <small>複勝共鳴70%集中形式</small>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="s-notify-exacta">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">3連複BOXを通知
+          <small>3連複BOX形式（高閾値推奨）</small>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="s-notify-trio">
+        　<span class="toggle-slider"></span>
+      　</label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">買い目タイプ別スコア下限
+          <small>各タイプの最低スコア</small>
+        </div>
+        <input type="range" id="s-bettype-threshold"
+          min="50" max="95" step="5" value="70"
+          oninput="document.getElementById('s-bettype-threshold-val').textContent=this.value+'点'">
+        <div class="range-val" id="s-bettype-threshold-val">70点</div>
+      </div> 
       </div>
       <div class="setting-group">
         <div class="setting-group-title">資産保護・レポート</div>
