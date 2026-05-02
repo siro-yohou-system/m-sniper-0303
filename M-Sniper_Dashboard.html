@@ -1109,32 +1109,45 @@ function renderMissChart(missStats) {
 }
 
 function renderWeatherMatrix(venueStats) {
-  const tbody=document.getElementById("weather-matrix-body");
-  if(!venueStats||venueStats.length===0){
-    tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">データ蓄積中</td></tr>';
+  const tbody = document.getElementById("weather-matrix-body");
+  if (!venueStats || venueStats.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">データ蓄積中</td></tr>';
     return;
   }
-  const fmt=(v)=>{
-    if(v==="-"||v===""||v===null||v===undefined) return '<span style="color:var(--text2)">-</span>';
-    const n=parseFloat(v);
-    if(isNaN(n)) return '<span style="color:var(--text2)">-</span>';
-    const col=n>=30?"var(--green)":n>=15?"var(--amber)":"var(--red)";
+
+  function fmt(v) {
+    if (v === "-" || v === null || v === undefined) {
+      return '<span style="color:var(--text2)">-</span>';
+    }
+    const n = parseFloat(v);
+    if (isNaN(n)) return '<span style="color:var(--text2)">-</span>';
+    const col = n >= 30 ? "var(--green)" :
+                n >= 15 ? "var(--amber)" : "var(--red)";
     return `<span style="font-family:var(--font-mono);color:${col};font-weight:700">${n}%</span>`;
-  };
-  tbody.innerHTML=venueStats.map(v=>{
-    const total=parseInt(v["総レース"])||0;
-    const rate=parseFloat(v["的中率"])||0;
-    const rc=rate>=30?"var(--green)":rate>=15?"var(--amber)":"var(--red)";
-    const roi=parseFloat(v["回収率"])||0;
-    const roiC=roi>=100?"var(--green)":roi>=70?"var(--amber)":"var(--red)";
+  }
+
+  tbody.innerHTML = venueStats.map(v => {
+    const rate = parseFloat(v.hitRate) || 0;
+    const rc   = rate >= 30 ? "var(--green)" :
+                 rate >= 15 ? "var(--amber)" : "var(--red)";
+    const roi  = parseFloat(v.roi) || 0;
+    const roiC = roi >= 300 ? "var(--green)" :
+                 roi >= 100 ? "var(--amber)" : "var(--red)";
     return `<tr>
-      <td style="font-weight:700">${v["会場名"]||"--"}</td>
-      <td style="font-family:var(--font-mono);color:var(--text2)">${total}</td>
+      <td style="font-weight:700">${v.venueName || "--"}</td>
+      <td style="font-family:var(--font-mono);color:var(--text2)">${v.total || 0}</td>
       <td><span style="font-family:var(--font-mono);color:${rc};font-weight:700">${rate}%</span></td>
-      <td>${fmt(v["風速0-2m_的中率"])}</td><td>${fmt(v["風速3-4m_的中率"])}</td><td>${fmt(v["風速5m以上_的中率"])}</td>
-      <td>${fmt(v["波高0-2cm_的中率"])}</td><td>${fmt(v["波高3-5cm_的中率"])}</td><td>${fmt(v["波高6cm以上_的中率"])}</td>
-      <td>${fmt(v["3連単流し_的中率"])}</td><td>${fmt(v["2連複_的中率"])}</td><td>${fmt(v["3連複BOX_的中率"])}</td>
-      <td><span style="font-family:var(--font-mono);color:${roiC}">${roi}%</span></td></tr>`;
+      <td>${fmt(v.wind0_2)}</td>
+      <td>${fmt(v.wind3_4)}</td>
+      <td>${fmt(v.wind5p)}</td>
+      <td>${fmt(v.wave0_2)}</td>
+      <td>${fmt(v.wave3_5)}</td>
+      <td>${fmt(v.wave6p)}</td>
+      <td>${fmt(v.trifecta)}</td>
+      <td>${fmt(v.exacta)}</td>
+      <td>${fmt(v.trio)}</td>
+      <td><span style="font-family:var(--font-mono);color:${roiC}">${roi}%</span></td>
+    </tr>`;
   }).join("");
 }
 
