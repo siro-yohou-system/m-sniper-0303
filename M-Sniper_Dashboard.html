@@ -1036,8 +1036,9 @@ async function loadMatching() {
   document.getElementById("matching-table-body").innerHTML='<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text2)">読み込み中...</td></tr>';
 
   try {
-    const data = await gasGet("getPatternStats");
-
+    const data   = await gasGet("getPatternStats");
+    const wxData = await gasGet("getWeatherMatrix");
+    
     // GASからエラーが返った場合
     if(!data || data.status !== "ok") {
       const msg = data && data.error ? data.error : "GASからエラーが返りました";
@@ -1058,7 +1059,7 @@ async function loadMatching() {
     document.getElementById("mt-himomiss").textContent = (s.himoMissRate||0)+"%";
 
     renderMissChart(data.missStats||[]);
-    renderWeatherMatrix(data.venueStats||[]);
+    renderWeatherMatrix(wxData.venueStats||[]);
     renderMatchingTable(data.recentPatterns||[]);
 
   } catch(e) {
