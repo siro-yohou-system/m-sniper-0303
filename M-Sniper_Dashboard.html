@@ -1631,61 +1631,228 @@ async function loadBacktestMaster(){
   }
 }
 
-async function loadBetTypeStats() {
-  const wrap = document.getElementById("bettype-stats");
-  try {
-    const data = await gasGet("getBetTypeStats");
-    if (data.status !== "ok" || !data.stats) {
-      wrap.innerHTML = '<div style="color:var(--text2);padding:10px">データなし</div>';
-      return;
-    }
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 買い目タイプ別成績（期間切り替え対応）
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    wrap.innerHTML = [...data.stats]
-      .sort((a, b) => b.roi - a.roi)
-      .map(s => {
-        const rateCol = s.rate >= 25 ? "var(--green)" :
-                        s.rate >= 15 ? "var(--amber)" : "var(--red)";
-        const roiCol  = s.roi >= 300 ? "var(--green)" :
-                        s.roi >= 100 ? "var(--amber)" : "var(--red)";
-        const profit  = s.profit >= 0
-          ? `+${s.profit.toLocaleString()}円`
-          : `${s.profit.toLocaleString()}円`;
-        const profitCol = s.profit >= 0 ? "var(--green)" : "var(--red)";
+let _perfRows   = [];   // キャッシュ
+let _perfPeriod = 'day';
+let _perfChart  = null;
 
-        return `
-          <div style="display:flex;align-items:center;gap:12px;
-            padding:10px 0;border-bottom:1px solid var(--border)">
-            <div style="min-width:80px;font-size:13px;font-weight:700">
-              ${s.type}
-            </div>
-            <div style="flex:1">
-              <div class="score-bar">
-                <div class="score-track">
-                  <div class="score-fill"
-                    style="width:${Math.min(s.rate*2,100)}%;background:${rateCol}">
-                  </div>
-                </div>
-                <div style="font-family:var(--font-mono);font-size:13px;
-                  color:${rateCol};min-width:48px">${s.rate}%</div>
-              </div>
-              <div style="font-size:11px;color:var(--text2);margin-top:3px">
-                回収率:
-                <span style="color:${roiCol};font-weight:700">${s.roi}%</span>
-                &nbsp;|&nbsp;
-                収支:
-                <span style="color:${profitCol};font-weight:700">${profit}</span>
-              </div>
-            </div>
-            <div style="font-family:var(--font-mono);font-size:12px;
-              color:var(--text2);text-align:right">
-              ${s.hit}/${s.total}R
-            </div>
-          </div>`;
-      }).join("") ||
-      '<div style="color:var(--text2);padding:10px">データなし</div>';
-  } catch(e) {
-    wrap.innerHTML = `<div style="color:var(--red);padding:10px">エラー: ${e.message}</div>`;
+// ボタン初期化（DOMロード後に呼ぶ）
+function initPerfTabs() {
+  document.querySelectorAll('.perf-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.perf-btn').forEach(b => {
+        b.style.background    = 'transparent';
+        b.style.color         = 'var(--text2)';
+        b.style.borderColor   = 'var(--border)';
+      });
+      btn.style.background  = 'rgba(0,212,255,.15)';
+      btn.style.color       = 'var(--cyan)';
+      btn.style.borderColor = 'var(--cyan)';
+      _perfPeriod = btn.dataset.period;
+      renderBetTypeStats();
+    });
+  });
+}
+
+// 期間フィルタ
+function filterPerfRows(rows, period) {
+  const now = new Date();
+  let cutoff;
+  if (period === 'day') {
+    cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  } else if (period === 'week') {
+    cutoff = new Date(now - 7 * 86400 * 1000);
+  } else if (period === 'month') {
+    cutoff = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else {
+    cutoff = new Date(now.getFullYear(), 0, 1);
   }
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  return rows.filter(r => r.date >= cutoffStr);
+}
+
+// データ取得
+async function loadBetTypeStats() {
+  try {
+    const data = await gasGet('getBetTypePerformance');
+    if (data.status !== 'ok') throw new Error(data.error || 'GASエラー');
+    _perfRows = data.rows || [];
+    initPerfTabs();
+    renderBetTypeStats();
+  } catch(e) {
+    const wrap = document.getElementById('bettype-stats');
+    if (wrap) wrap.innerHTML = `<div style="color:var(--red);padding:10px">エラー: ${e.message}</div>`;
+  }
+}
+
+// テーブル描画
+function renderBetTypeStats() {
+  const wrap = document.getElementById('bettype-stats');
+  if (!wrap) return;
+
+  const filtered = filterPerfRows(_perfRows, _perfPeriod);
+
+  // タイプ別集計
+  const ORDER = ['特異点逆目', '万舟トリガー', '2連複', '3連複BOX', 'その他'];
+  const summary = {};
+  ORDER.forEach(t => summary[t] = { total:0, hit:0, invest:0, payout:0, pnl:0 });
+
+  filtered.forEach(r => {
+    const t = r.betType || 'その他';
+    if (!summary[t]) summary[t] = { total:0, hit:0, invest:0, payout:0, pnl:0 };
+    summary[t].total++;
+    if (r.hit) summary[t].hit++;
+    summary[t].invest += Number(r.invest) || 0;
+    summary[t].payout += Number(r.payout) || 0;
+    summary[t].pnl    += Number(r.pnl)    || 0;
+  });
+
+  // 合計
+  let totals = { total:0, hit:0, invest:0, payout:0, pnl:0 };
+
+  const rows = ORDER.filter(t => summary[t].total > 0).map(t => {
+    const s = summary[t];
+    totals.total  += s.total;
+    totals.hit    += s.hit;
+    totals.invest += s.invest;
+    totals.payout += s.payout;
+    totals.pnl    += s.pnl;
+
+    const rate = s.total > 0 ? (s.hit / s.total * 100).toFixed(1) : '0.0';
+    const roi  = s.invest > 0 ? (s.payout / s.invest * 100).toFixed(1) : '0.0';
+    const rateColor  = parseFloat(rate) >= 25 ? 'var(--green)' : parseFloat(rate) >= 15 ? 'var(--amber)' : 'var(--red)';
+    const roiColor   = parseFloat(roi)  >= 300 ? 'var(--green)' : parseFloat(roi) >= 100 ? 'var(--amber)' : 'var(--red)';
+    const pnlColor   = s.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    const pnlStr     = (s.pnl >= 0 ? '+' : '') + s.pnl.toLocaleString() + '円';
+    const sc = Math.min(parseFloat(rate) * 2, 100);
+
+    return `<div style="display:flex;align-items:center;gap:12px;
+              padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="min-width:80px;font-size:13px;font-weight:700">${t}</div>
+      <div style="flex:1">
+        <div class="score-bar">
+          <div class="score-track">
+            <div class="score-fill" style="width:${sc}%;background:${rateColor}"></div>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:13px;
+            color:${rateColor};min-width:48px">${rate}%</div>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">
+          回収率: <span style="color:${roiColor};font-weight:700">${roi}%</span>
+          &nbsp;|&nbsp;
+          収支: <span style="color:${pnlColor};font-weight:700">${pnlStr}</span>
+        </div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:12px;
+        color:var(--text2);text-align:right;min-width:60px">
+        ${s.hit}/${s.total}R
+      </div>
+    </div>`;
+  });
+
+  if (rows.length === 0) {
+    wrap.innerHTML = '<div style="color:var(--text2);padding:10px">該当データなし</div>';
+  } else {
+    // 合計行を追加
+    const totalRate = totals.total > 0 ? (totals.hit / totals.total * 100).toFixed(1) : '0.0';
+    const totalRoi  = totals.invest > 0 ? (totals.payout / totals.invest * 100).toFixed(1) : '0.0';
+    const totalPnl  = totals.pnl;
+    const totalPnlColor = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
+    const totalPnlStr   = (totalPnl >= 0 ? '+' : '') + totalPnl.toLocaleString() + '円';
+
+    rows.push(`<div style="display:flex;align-items:center;gap:12px;
+        padding:10px 0;background:rgba(0,212,255,.05);border-radius:6px;margin-top:4px">
+      <div style="min-width:80px;font-size:13px;font-weight:700;color:var(--cyan)">合計</div>
+      <div style="flex:1">
+        <div style="font-family:var(--font-mono);font-size:13px;
+          color:var(--cyan)">${totalRate}%</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">
+          回収率: <span style="color:${parseFloat(totalRoi)>=100?'var(--green)':'var(--amber)'};font-weight:700">${totalRoi}%</span>
+          &nbsp;|&nbsp;
+          収支: <span style="color:${totalPnlColor};font-weight:700">${totalPnlStr}</span>
+        </div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:12px;
+        color:var(--text2);text-align:right;min-width:60px">
+        ${totals.hit}/${totals.total}R
+      </div>
+    </div>`);
+
+    wrap.innerHTML = rows.join('');
+  }
+
+  // 収支推移グラフ描画
+  renderPerfChart(filtered);
+}
+
+// 収支推移グラフ
+function renderPerfChart(rows) {
+  const canvas = document.getElementById('perf-pnl-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  // 日付ごとに累計収支
+  const byDate = {};
+  rows.forEach(r => {
+    if (!byDate[r.date]) byDate[r.date] = 0;
+    byDate[r.date] += Number(r.pnl) || 0;
+  });
+
+  const dates = Object.keys(byDate).sort();
+  if (dates.length === 0) {
+    canvas.style.display = 'none';
+    return;
+  }
+  canvas.style.display = '';
+
+  let cum = 0;
+  const cumData = dates.map(d => { cum += byDate[d]; return cum; });
+
+  if (_perfChart) { _perfChart.destroy(); _perfChart = null; }
+
+  _perfChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: dates.map(d => d.slice(5)), // MM-DD表示
+      datasets: [{
+        label: '累計収支',
+        data: cumData,
+        borderColor: '#00d4ff',
+        backgroundColor: 'rgba(0,212,255,0.08)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: dates.length > 14 ? 0 : 3,
+        pointBackgroundColor: cumData.map(v => v >= 0 ? '#00e676' : '#ff4455'),
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.parsed.y >= 0 ? '+' : ''}${ctx.parsed.y.toLocaleString()}円`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#5a7a99', font: { size: 10 }, maxTicksLimit: 12 },
+          grid: { color: 'rgba(26,45,69,0.5)' }
+        },
+        y: {
+          ticks: {
+            color: '#5a7a99',
+            font: { size: 10 },
+            callback: v => (v >= 0 ? '+' : '') + v.toLocaleString()
+          },
+          grid: { color: 'rgba(26,45,69,0.5)' }
+        }
+      }
+    }
+  });
 }
   
 // ── 初期ロード（確実に実行）
