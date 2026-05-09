@@ -1712,6 +1712,7 @@ function filterDailyStats(stats, period) {
   return stats.filter(s => s.date >= cutoffStr);
 }
 
+
 function renderChartWithPeriod() {
   if (_chartDailyStats.length === 0) return;
 
@@ -1720,12 +1721,14 @@ function renderChartWithPeriod() {
   if (filtered.length === 0) {
     document.getElementById('chart-table-body').innerHTML =
       '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">該当データなし</td></tr>';
-    if (chartCum)  { chartCum.destroy();  chartCum  = null; }
-    if (chartRate) { chartRate.destroy(); chartRate = null; }
+
+    // ↓ chartCum/chartRate の代わりに安全に破棄
+    try { if(chartCum)  { chartCum.destroy();  chartCum  = null; } } catch(e) {}
+    try { if(chartRate) { chartRate.destroy(); chartRate = null; } } catch(e) {}
     return;
   }
 
-  // ★ 期間内で累計収支を0から再計算してcumProfitを上書き
+  // 期間内で累計収支を0から再計算
   let cumSum = 0;
   const statsWithCum = filtered.map(s => {
     cumSum += (s.profit || 0);
@@ -1735,7 +1738,7 @@ function renderChartWithPeriod() {
   renderCharts(statsWithCum);
   renderChartTable(statsWithCum);
 }
-
+  
   
   
 // 期間フィルタ
