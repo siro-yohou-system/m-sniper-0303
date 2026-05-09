@@ -1026,6 +1026,10 @@ async function loadChart() {
         '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">データがありません。レース結果が蓄積されると表示されます。</td></tr>';
       return;
     }
+    
+    _chartDailyStats = data.dailyStats;
+    initChartPeriodTabs();
+
     renderCharts(data.dailyStats);
     renderChartTable(data.dailyStats);
   } catch(e) {
@@ -1657,6 +1661,71 @@ function initPerfTabs() {
   });
 }
 
+
+// ━━━ 収支推移ページの期間タブ ━━━
+let _chartPeriod = 'all';
+let _chartDailyStats = []; // getDailyStatsのキャッシュ
+
+function initChartPeriodTabs() {
+  document.querySelectorAll('.chart-period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // ボタンスタイル切り替え
+      document.querySelectorAll('.chart-period-btn').forEach(b => {
+        b.style.background  = 'transparent';
+        b.style.color       = 'var(--text2)';
+        b.style.borderColor = 'var(--border)';
+      });
+      btn.style.background  = 'rgba(0,212,255,.15)';
+      btn.style.color       = 'var(--cyan)';
+      btn.style.borderColor = 'var(--cyan)';
+
+      _chartPeriod = btn.dataset.period;
+      renderChartWithPeriod();
+    });
+  });
+}
+
+function filterDailyStats(stats, period) {
+  if (period === 'all') return stats;
+  const now = new Date();
+  let cutoff;
+  if (period === 'day') {
+    cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  } else if (period === 'week') {
+    cutoff = new Date(now - 7 * 86400 * 1000);
+  } else if (period === 'month') {
+    cutoff = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  return stats.filter(s => s.date >= cutoffStr);
+}
+
+function renderChartWithPeriod() {
+  if (_chartDailyStats.length === 0) return;
+
+  const filtered = filterDailyStats(_chartDailyStats, _chartPeriod);
+
+  if (filtered.length === 0) {
+    document.getElementById('chart-table-body').innerHTML =
+      '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">該当データなし</td></tr>';
+    if (chartCum) { chartCum.destroy(); chartCum = null; }
+    if (chartRate) { chartRate.destroy(); chartRate = null; }
+    return;
+  }
+
+  // 累計収支を期間内で再計算（期間内の初日からの累計）
+  let cumSum = 0;
+  const statsWithCum = filtered.map(s => {
+    cumSum += s.profit;
+    return { ...s, cumProfit: cumSum };
+  });
+
+  renderCharts(statsWithCum);
+  renderChartTable(statsWithCum);
+}
+
+  
+  
 // 期間フィルタ
 function filterPerfRows(rows, period) {
   const now = new Date();
