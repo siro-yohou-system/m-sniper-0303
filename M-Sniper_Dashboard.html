@@ -253,32 +253,38 @@ select:focus{border-color:var(--cyan)}
   </div>
 
   <!-- ══════════════════════════════════════ CHART ══ -->
-  <!-- 収支推移ページにも期間タブ -->
-  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap" id="chart-period-tabs">
-    <button class="chart-period-btn active" data-period="all"
-      style="padding:5px 14px;border:1px solid var(--cyan);background:rgba(0,212,255,.15);
-             color:var(--cyan);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
-      全期間
-    </button>
-      <button class="chart-period-btn" data-period="month"
-      style="padding:5px 14px;border:1px solid var(--border);background:transparent;
-             color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
-      1ヶ月
-    </button>
-    <button class="chart-period-btn" data-period="week"
-      style="padding:5px 14px;border:1px solid var(--border);background:transparent;
-             color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
-      1週間
-    </button>
-    <button class="chart-period-btn" data-period="day"
-      style="padding:5px 14px;border:1px solid var(--border);background:transparent;
-             color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
-      今日
-    </button>
-  </div>
+
 
   
     <div class="page" id="page-chart">
+
+      <!-- 収支推移ページにも期間タブ -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap" id="chart-period-tabs">
+        <button class="chart-period-btn active" data-period="all"
+          style="padding:5px 14px;border:1px solid var(--cyan);background:rgba(0,212,255,.15);
+                 color:var(--cyan);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+          全期間
+        </button>
+          <button class="chart-period-btn" data-period="month"
+          style="padding:5px 14px;border:1px solid var(--border);background:transparent;
+                 color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+          1ヶ月
+        </button>
+        <button class="chart-period-btn" data-period="week"
+          style="padding:5px 14px;border:1px solid var(--border);background:transparent;
+                 color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+          1週間
+        </button>
+        <button class="chart-period-btn" data-period="day"
+          style="padding:5px 14px;border:1px solid var(--border);background:transparent;
+                 color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+          今日
+        </button>
+      </div>
+
+
+
+      
       <div class="card" style="margin-bottom:14px">
         <div class="card-title">累計収支推移</div>
         <canvas id="chartCumProfit" height="80"></canvas>
