@@ -1050,6 +1050,9 @@ async function loadChart() {
   }
 }
 
+let chartCum = null;
+let chartRate = null;
+  
 function renderCharts(stats) {
   const labels  = stats.map(s => s.date.substring(5));
   const cumData = stats.map(s => s.cumProfit);
