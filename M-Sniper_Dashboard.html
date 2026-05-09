@@ -1022,24 +1022,30 @@ async function saveSettings() {
 }
 
 // ━━━ チャート ━━━
-let chartCum=null, chartRate=null;
+let _chartTabsInitialized = false; // 追加：初期化フラグ
 
 async function loadChart() {
   try {
     const data = await gasGet("getDailyStats");
     if(data.status!=="ok"||!data.dailyStats||data.dailyStats.length===0){
-      document.getElementById("chart-table-body").innerHTML=
+      document.getElementById('chart-table-body').innerHTML=
         '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">データがありません。レース結果が蓄積されると表示されます。</td></tr>';
       return;
     }
-    
-    _chartDailyStats = data.dailyStats;
-    initChartPeriodTabs();
 
-    renderCharts(data.dailyStats);
-    renderChartTable(data.dailyStats);
+    _chartDailyStats = data.dailyStats;
+
+    // タブ初期化は1回だけ
+    if (!_chartTabsInitialized) {
+      initChartPeriodTabs();
+      _chartTabsInitialized = true;
+    }
+
+    // 現在の期間で描画
+    renderChartWithPeriod();
+
   } catch(e) {
-    document.getElementById("chart-table-body").innerHTML=
+    document.getElementById('chart-table-body').innerHTML=
       '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--red)">取得エラー: '+e.message+'</td></tr>';
   }
 }
@@ -1714,16 +1720,16 @@ function renderChartWithPeriod() {
   if (filtered.length === 0) {
     document.getElementById('chart-table-body').innerHTML =
       '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">該当データなし</td></tr>';
-    if (chartCum) { chartCum.destroy(); chartCum = null; }
+    if (chartCum)  { chartCum.destroy();  chartCum  = null; }
     if (chartRate) { chartRate.destroy(); chartRate = null; }
     return;
   }
 
-  // 累計収支を期間内で再計算（期間内の初日からの累計）
+  // ★ 期間内で累計収支を0から再計算してcumProfitを上書き
   let cumSum = 0;
   const statsWithCum = filtered.map(s => {
-    cumSum += s.profit;
-    return { ...s, cumProfit: cumSum };
+    cumSum += (s.profit || 0);
+    return Object.assign({}, s, { cumProfit: cumSum });
   });
 
   renderCharts(statsWithCum);
