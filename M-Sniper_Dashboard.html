@@ -147,11 +147,43 @@ select:focus{border-color:var(--cyan)}
     </div>
 
     <div class="card" style="margin-top:14px">
-      <div class="card-title">買い目タイプ別成績</div>
+      <div class="card-title">買い目タイプ別成績・収支推移</div>
+
+      <!-- 期間切り替えボタン -->
+      <div id="perf-period-tabs" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="perf-btn active" data-period="day"
+          style="padding:5px 14px;border:1px solid var(--cyan);background:rgba(0,212,255,.15);
+                 color:var(--cyan);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+          今日
+        </button>
+        <button class="perf-btn" data-period="week"
+          style="padding:5px 14px;border:1px solid var(--border);background:transparent;
+                 color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+          1週間
+        </button>
+        <button class="perf-btn" data-period="month"
+          style="padding:5px 14px;border:1px solid var(--border);background:transparent;
+                 color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+          1ヶ月
+        </button>
+        <button class="perf-btn" data-period="year"
+          style="padding:5px 14px;border:1px solid var(--border);background:transparent;
+                 color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+          1年
+        </button>
+      </div>
+
+      <!-- タイプ別成績 -->
       <div id="bettype-stats">
         <div class="loading">データ取得中</div>
       </div>
+
+      <!-- 収支推移チャート -->
+      <div style="margin-top:14px">
+        <canvas id="perf-pnl-chart" height="100"></canvas>
+      </div>
     </div>
+    
     </div>
   <!-- ══════════════════════════════════════ ANALYSIS LOG ══ -->
   <div class="page" id="page-analysis">
@@ -221,25 +253,50 @@ select:focus{border-color:var(--cyan)}
   </div>
 
   <!-- ══════════════════════════════════════ CHART ══ -->
-  <div class="page" id="page-chart">
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-title">累計収支推移</div>
-      <canvas id="chartCumProfit" height="80"></canvas>
-    </div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-title">日次的中率推移</div>
-      <canvas id="chartRate" height="80"></canvas>
-    </div>
-    <div class="card">
-      <div class="card-title">日次成績サマリー</div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>日付</th><th>解析R</th><th>的中</th><th>的中率</th><th>投資額</th><th>払戻額</th><th>収支</th><th>累計収支</th><th>回収率</th></tr></thead>
-          <tbody id="chart-table-body"><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">読み込み中...</td></tr></tbody>
-        </table>
+  <!-- 収支推移ページにも期間タブ -->
+  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap" id="chart-period-tabs">
+    <button class="chart-period-btn active" data-period="all"
+      style="padding:5px 14px;border:1px solid var(--cyan);background:rgba(0,212,255,.15);
+             color:var(--cyan);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+      全期間
+    </button>
+      <button class="chart-period-btn" data-period="month"
+      style="padding:5px 14px;border:1px solid var(--border);background:transparent;
+             color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+      1ヶ月
+    </button>
+    <button class="chart-period-btn" data-period="week"
+      style="padding:5px 14px;border:1px solid var(--border);background:transparent;
+             color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+      1週間
+    </button>
+    <button class="chart-period-btn" data-period="day"
+      style="padding:5px 14px;border:1px solid var(--border);background:transparent;
+             color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+      今日
+    </button>
+  </div>
+
+  
+    <div class="page" id="page-chart">
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">累計収支推移</div>
+        <canvas id="chartCumProfit" height="80"></canvas>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">日次的中率推移</div>
+        <canvas id="chartRate" height="80"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title">日次成績サマリー</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>日付</th><th>解析R</th><th>的中</th><th>的中率</th><th>投資額</th><th>払戻額</th><th>収支</th><th>累計収支</th><th>回収率</th></tr></thead>
+            <tbody id="chart-table-body"><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text2)">読み込み中...</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </div>
 
   <!-- ══════════════════════════════════════ SETTINGS ══ -->
   <div class="page" id="page-settings">
