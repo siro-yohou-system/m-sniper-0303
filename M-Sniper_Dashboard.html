@@ -250,6 +250,36 @@ select:focus{border-color:var(--cyan)}
         </table>
       </div>
     </div>
+
+    <!-- ━━━ 分析ダッシュボード ━━━ -->
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">📊 スコア帯別的中率</div>
+      <div id="score-stat-wrap">
+        <div class="loading">データ取得中</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">📊 買い目タイプ × スコア帯クロス集計</div>
+      <div id="cross-stat-wrap">
+        <div class="loading">データ取得中</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">📊 Chaos値帯別的中率</div>
+      <div id="chaos-stat-wrap">
+        <div class="loading">データ取得中</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">📊 会場別的中率ランキング（10件以上）</div>
+      <div id="venue-rank-wrap">
+        <div class="loading">データ取得中</div>
+      </div>
+    </div>
+    
   </div>
 
   <!-- ══════════════════════════════════════ CHART ══ -->
@@ -1947,6 +1977,220 @@ function renderPerfChart(rows) {
     }
   });
 }
+
+// ━━━ 分析ダッシュボード ━━━
+async function loadAnalysisDashboard() {
+  try {
+    const data = await gasGet('getAnalysisStats');
+    if (data.status !== 'ok') throw new Error(data.error || 'GASエラー');
+    renderScoreStat(data.scoreStat);
+    renderChaosStat(data.chaosStat);
+    renderCrossStat(data.crossStat);
+    renderVenueRank(data.venueArr);
+  } catch(e) {
+    ['score','chaos','cross','venue-rank'].forEach(id => {
+      const el = document.getElementById(id + '-stat-wrap') ||
+                 document.getElementById(id + '-wrap');
+      if (el) el.innerHTML = `<div style="color:var(--red);padding:10px">エラー: ${e.message}</div>`;
+    });
+  }
+}
+
+// スコア帯別
+function renderScoreStat(stat) {
+  const wrap = document.getElementById('score-stat-wrap');
+  const ranges = ['50-59','60-69','70-79','80-89','90+'];
+  const colors = ['var(--red)','var(--amber)','var(--cyan)','var(--green)','var(--purple)'];
+
+  wrap.innerHTML = `
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:center">スコア帯</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">件数</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">的中率</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">回収率</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">収支</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:left;min-width:120px">的中率バー</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${ranges.map((r, i) => {
+            const s    = stat[r];
+            const rate = s.total > 0 ? (s.hit / s.total * 100).toFixed(1) : '0.0';
+            const roi  = s.invest > 0 ? (s.payout / s.invest * 100).toFixed(1) : '0.0';
+            const pnl  = s.payout - s.invest;
+            const pnlColor = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+            const col  = colors[i];
+            return `<tr style="border-bottom:1px solid rgba(26,45,69,.5)">
+              <td style="padding:8px;text-align:center;font-family:var(--font-mono);
+                color:${col};font-weight:700">${r}点</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:var(--text2)">${s.total}件</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:${col};font-weight:700">${rate}%</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:${parseFloat(roi)>=100?'var(--green)':'var(--amber)'}">${roi}%</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:${pnlColor}">${pnl>=0?'+':''}${pnl.toLocaleString()}円</td>
+              <td style="padding:8px">
+                <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden">
+                  <div style="height:100%;width:${Math.min(parseFloat(rate)*2,100)}%;
+                    background:${col};border-radius:4px"></div>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// Chaos帯別
+function renderChaosStat(stat) {
+  const wrap = document.getElementById('chaos-stat-wrap');
+  const ranges = ['~0.70','0.71-0.80','0.81-0.88','0.89+'];
+  const colors = ['var(--green)','var(--cyan)','var(--amber)','var(--red)'];
+  const labels = ['低混沌','中混沌','高混沌','超混沌'];
+
+  wrap.innerHTML = `
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">
+      ※Chaos値はANALYSIS_LOGのデータがある行のみ集計
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:center">Chaos帯</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:center">傾向</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">件数</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">的中率</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">回収率</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">収支</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${ranges.map((r, i) => {
+            const s    = stat[r];
+            const rate = s.total > 0 ? (s.hit / s.total * 100).toFixed(1) : '0.0';
+            const roi  = s.invest > 0 ? (s.payout / s.invest * 100).toFixed(1) : '0.0';
+            const pnl  = s.payout - s.invest;
+            const pnlColor = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+            const col  = colors[i];
+            return `<tr style="border-bottom:1px solid rgba(26,45,69,.5)">
+              <td style="padding:8px;text-align:center;font-family:var(--font-mono);
+                color:${col};font-weight:700">${r}</td>
+              <td style="padding:8px;text-align:center;font-size:11px;
+                color:${col}">${labels[i]}</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:var(--text2)">${s.total}件</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:${col};font-weight:700">${rate}%</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:${parseFloat(roi)>=100?'var(--green)':'var(--amber)'}">${roi}%</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:${pnlColor}">${pnl>=0?'+':''}${pnl.toLocaleString()}円</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// クロス集計
+function renderCrossStat(stat) {
+  const wrap   = document.getElementById('cross-stat-wrap');
+  const types  = ['特異点逆目','万舟トリガー','2連複','3連複BOX'];
+  const ranges = ['50-59','60-69','70-79','80-89','90+'];
+
+  const rows = types.map(t => {
+    const cells = ranges.map(r => {
+      const s = stat[t][r];
+      if (s.total === 0) return `<td style="padding:6px 10px;text-align:center;
+        color:var(--text2);font-size:11px">-</td>`;
+      const rate = (s.hit / s.total * 100).toFixed(0);
+      const col  = parseFloat(rate) >= 30 ? 'var(--green)' :
+                   parseFloat(rate) >= 20 ? 'var(--amber)' : 'var(--red)';
+      return `<td style="padding:6px 10px;text-align:center">
+        <div style="font-family:var(--font-mono);font-size:13px;
+          color:${col};font-weight:700">${rate}%</div>
+        <div style="font-size:10px;color:var(--text2)">${s.hit}/${s.total}</div>
+      </td>`;
+    }).join('');
+
+    return `<tr style="border-bottom:1px solid rgba(26,45,69,.5)">
+      <td style="padding:6px 10px;font-weight:700;white-space:nowrap">${t}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="padding:8px 10px;background:var(--bg3);color:var(--text2);text-align:left">買い目タイプ</th>
+            ${ranges.map(r => `<th style="padding:8px 10px;background:var(--bg3);
+              color:var(--text2);text-align:center">${r}点</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:8px">
+      緑:30%以上 / 橙:20%以上 / 赤:20%未満
+    </div>`;
+}
+
+// 会場別ランキング
+function renderVenueRank(venueArr) {
+  const wrap = document.getElementById('venue-rank-wrap');
+  if (!venueArr || venueArr.length === 0) {
+    wrap.innerHTML = '<div style="color:var(--text2);padding:10px">データなし</div>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:center">順位</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:left">会場</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">件数</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">的中率</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">回収率</th>
+            <th style="padding:8px;background:var(--bg3);color:var(--text2);text-align:right">収支</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${venueArr.map((v, i) => {
+            const rateColor = v.rate >= 30 ? 'var(--green)' :
+                              v.rate >= 20 ? 'var(--amber)' : 'var(--red)';
+            const roiColor  = v.roi >= 300 ? 'var(--green)' :
+                              v.roi >= 100 ? 'var(--amber)' : 'var(--red)';
+            const pnlColor  = v.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+            const medal     = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}位`;
+            return `<tr style="border-bottom:1px solid rgba(26,45,69,.5)">
+              <td style="padding:8px;text-align:center">${medal}</td>
+              <td style="padding:8px;font-weight:700">${v.name}</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:var(--text2)">${v.total}件</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:${rateColor};font-weight:700">${v.rate}%</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:${roiColor}">${v.roi}%</td>
+              <td style="padding:8px;text-align:right;font-family:var(--font-mono);
+                color:${pnlColor}">${v.pnl>=0?'+':''}${v.pnl.toLocaleString()}円</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+
   
 // ── 初期ロード（確実に実行）
 window.addEventListener("load", () => { loadDashboard(); });
