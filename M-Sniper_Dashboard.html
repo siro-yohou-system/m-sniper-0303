@@ -1174,6 +1174,7 @@ async function loadMatching() {
     document.getElementById("weather-matrix-body").innerHTML=`<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--red)">エラー</td></tr>`;
     document.getElementById("matching-table-body").innerHTML=`<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--red)">エラー</td></tr>`;
   }
+  loadAnalysisDashboard();
 }
 
 function renderMissChart(missStats) {
