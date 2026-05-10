@@ -1700,8 +1700,10 @@ function initChartPeriodTabs() {
   });
 }
 
+
 function filterDailyStats(stats, period) {
   if (period === 'all') return stats;
+
   const now = new Date();
   let cutoff;
   if (period === 'day') {
@@ -1711,8 +1713,12 @@ function filterDailyStats(stats, period) {
   } else if (period === 'month') {
     cutoff = new Date(now.getFullYear(), now.getMonth(), 1);
   }
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
-  return stats.filter(s => s.date >= cutoffStr);
+
+  return stats.filter(s => {
+    // '2026/04/13' → Date変換して比較
+    const d = new Date(s.date.replace(/\//g, '-'));
+    return d >= cutoff;
+  });
 }
 
 
