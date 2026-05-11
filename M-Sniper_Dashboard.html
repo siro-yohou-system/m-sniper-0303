@@ -1061,6 +1061,14 @@ async function loadSettings() {
     document.getElementById("gas-status").textContent="接続エラー";
     document.getElementById("gas-status").className="badge badge-miss";
   }
+    // フィルターモード読み込み
+  const filterMode = s.filter_mode || 'normal';
+  if (filterMode === 'high_accuracy') {
+    document.getElementById('filter-mode-b').checked = true;
+  } else {
+    document.getElementById('filter-mode-a').checked = true;
+  }
+  onFilterModeChange(); // 表示を更新
 }
 
 async function saveSettings() {
@@ -1087,6 +1095,8 @@ async function saveSettings() {
     notify_exacta:      document.getElementById("s-notify-exacta").checked,
     notify_trio:        document.getElementById("s-notify-trio").checked,
     bettype_threshold:  Number(document.getElementById("s-bettype-threshold").value),
+    filter_mode: document.getElementById('filter-mode-b').checked
+    ? 'high_accuracy' : 'normal',
   };
   try {
     const res = await gasPost({action:"saveSettings", settings});
@@ -2239,7 +2249,51 @@ function renderVenueRank(venueArr) {
     </div>`;
 }
 
+function onFilterModeChange() {
+  const isHighAccuracy = document.getElementById('filter-mode-b').checked;
 
+  // ボタンスタイル
+  document.getElementById('filter-btn-a').style.borderColor =
+    isHighAccuracy ? 'var(--border)' : 'var(--cyan)';
+  document.getElementById('filter-btn-a').style.color =
+    isHighAccuracy ? 'var(--text2)' : 'var(--cyan)';
+
+  document.getElementById('filter-btn-b').style.borderColor =
+    isHighAccuracy ? 'var(--cyan)' : 'var(--border)';
+  document.getElementById('filter-btn-b').style.color =
+    isHighAccuracy ? 'var(--cyan)' : 'var(--text2)';
+
+  // 高精度条件の表示
+  document.getElementById('high-accuracy-info').style.display =
+    isHighAccuracy ? 'block' : 'none';
+
+  // 通常フィルター設定をマスク
+  const normalSettings = [
+    'threshold-row',        // 通知閾値スコア
+    'mantoku-threshold-row' // 万舟スコア下限
+  ];
+  normalSettings.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.opacity = isHighAccuracy ? '0.3' : '1';
+  });
+
+  // 買い目タイプ別通知グループをマスク
+  // setting-group-titleが「買い目タイプ別通知」のグループ全体
+  document.querySelectorAll('.setting-row').forEach(row => {
+    const label = row.querySelector('.setting-label');
+    if (!label) return;
+    const text = label.textContent;
+    if (text.includes('特異点逆目を通知') ||
+        text.includes('2連複を通知') ||
+        text.includes('3連複BOXを通知') ||
+        text.includes('買い目タイプ別スコア下限') ||
+        text.includes('期待値以上の予想のみ送信') ||
+        text.includes('通知閾値スコア')) {
+      row.style.opacity = isHighAccuracy ? '0.3' : '1';
+      row.style.pointerEvents = isHighAccuracy ? 'none' : 'auto';
+    }
+  });
+}
   
 // ── 初期ロード（確実に実行）
 window.addEventListener("load", () => { loadDashboard(); });
