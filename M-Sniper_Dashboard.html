@@ -2059,8 +2059,14 @@ async function loadAnalysisDashboard() {
 // スコア帯別
 function renderScoreStat(stat) {
   const wrap = document.getElementById('score-stat-wrap');
-  const ranges = ['50-59','60-69','70-79','80-89','90+'];
-  const colors = ['var(--red)','var(--amber)','var(--cyan)','var(--green)','var(--purple)'];
+  const ranges = [
+    '10-19','20-29','30-39','40-49',
+    '50-59','60-69','70-79','80-89','90+'
+  ];
+  const colors = [
+    'var(--text2)','var(--text2)','var(--text2)','var(--text2)',
+    'var(--red)','var(--amber)','var(--cyan)','var(--green)','var(--purple)'
+  ];
 
   wrap.innerHTML = `
     <div style="overflow-x:auto">
@@ -2077,7 +2083,7 @@ function renderScoreStat(stat) {
         </thead>
         <tbody>
           ${ranges.map((r, i) => {
-            const s    = stat[r];
+            const s    = stat[r] || {total:0,hit:0,invest:0,payout:0};
             const rate = s.total > 0 ? (s.hit / s.total * 100).toFixed(1) : '0.0';
             const roi  = s.invest > 0 ? (s.payout / s.invest * 100).toFixed(1) : '0.0';
             const pnl  = s.payout - s.invest;
@@ -2162,17 +2168,20 @@ function renderChaosStat(stat) {
 function renderCrossStat(stat) {
   const wrap   = document.getElementById('cross-stat-wrap');
   const types  = ['特異点逆目','万舟トリガー','2連複','3連複BOX'];
-  const ranges = ['50-59','60-69','70-79','80-89','90+'];
+  const ranges = [
+    '10-19','20-29','30-39','40-49',
+    '50-59','60-69','70-79','80-89','90+'
+  ];
 
   const rows = types.map(t => {
     const cells = ranges.map(r => {
-      const s = stat[t][r];
-      if (s.total === 0) return `<td style="padding:6px 10px;text-align:center;
+      const s = (stat[t] && stat[t][r]) ? stat[t][r] : {total:0,hit:0};
+      if (s.total === 0) return `<td style="padding:6px 8px;text-align:center;
         color:var(--text2);font-size:11px">-</td>`;
       const rate = (s.hit / s.total * 100).toFixed(0);
       const col  = parseFloat(rate) >= 30 ? 'var(--green)' :
                    parseFloat(rate) >= 20 ? 'var(--amber)' : 'var(--red)';
-      return `<td style="padding:6px 10px;text-align:center">
+      return `<td style="padding:6px 8px;text-align:center">
         <div style="font-family:var(--font-mono);font-size:13px;
           color:${col};font-weight:700">${rate}%</div>
         <div style="font-size:10px;color:var(--text2)">${s.hit}/${s.total}</div>
@@ -2190,9 +2199,10 @@ function renderCrossStat(stat) {
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>
           <tr>
-            <th style="padding:8px 10px;background:var(--bg3);color:var(--text2);text-align:left">買い目タイプ</th>
-            ${ranges.map(r => `<th style="padding:8px 10px;background:var(--bg3);
-              color:var(--text2);text-align:center">${r}点</th>`).join('')}
+            <th style="padding:8px 10px;background:var(--bg3);color:var(--text2);
+              text-align:left;white-space:nowrap">買い目タイプ</th>
+            ${ranges.map(r => `<th style="padding:8px 6px;background:var(--bg3);
+              color:var(--text2);text-align:center;white-space:nowrap">${r}点</th>`).join('')}
           </tr>
         </thead>
         <tbody>${rows}</tbody>
