@@ -1057,18 +1057,19 @@ async function loadSettings() {
     const bt = Number(s.bettype_threshold) || 70;
     document.getElementById("s-bettype-threshold").value = bt;
     document.getElementById("s-bettype-threshold-val").textContent = bt + "点";
+
+    const filterMode = s.filter_mode || 'normal';
+    if (filterMode === 'high_accuracy') {
+      document.getElementById('filter-mode-b').checked = true;
+    } else {
+      document.getElementById('filter-mode-a').checked = true;
+    }
+    onFilterModeChange();
+
   } catch(e) {
     document.getElementById("gas-status").textContent="接続エラー";
     document.getElementById("gas-status").className="badge badge-miss";
   }
-    // フィルターモード読み込み
-  const filterMode = s.filter_mode || 'normal';
-  if (filterMode === 'high_accuracy') {
-    document.getElementById('filter-mode-b').checked = true;
-  } else {
-    document.getElementById('filter-mode-a').checked = true;
-  }
-  onFilterModeChange(); // 表示を更新
 }
 
 async function saveSettings() {
