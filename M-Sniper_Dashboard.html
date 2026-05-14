@@ -487,11 +487,7 @@ select:focus{border-color:var(--cyan)}
         ✓ 高精度フィルター条件
       </div>
       <div style="color:var(--text2);line-height:1.8">
-        対象会場: 徳山・大村・下関・宮島・唐津・若松・平和島・芦屋・丸亀<br>
-        特異点逆目: 80点以上<br>
-        万舟トリガー: 70点以上<br>
-        3連複BOX: 50点以上<br>
-        2連複: <span style="color:var(--red)">送信しない</span>
+        <span id="hf-info-text">読み込み中...</span>
       </div>
     </div>
        
@@ -1070,6 +1066,28 @@ async function loadSettings() {
     document.getElementById("gas-status").textContent="接続エラー";
     document.getElementById("gas-status").className="badge badge-miss";
   }
+
+// 高精度フィルター条件を動的表示
+  try {
+    const hfData = await gasGet("getHFCache");
+    if (hfData.status === 'ok') {
+      const c = hfData.cache;
+      const venues = (c.validVenues || []).join('・') || 'なし';
+      const rangeText = (ranges) => {
+        if (!ranges || ranges.length === 0) return '<span style="color:var(--red)">送信しない</span>';
+        return ranges.join(', ') + '点帯';
+      };
+      document.getElementById('hf-info-text').innerHTML =
+        `対象会場: ${venues}<br>` +
+        `特異点逆目: ${rangeText(c.validRanges['特異点逆目'])}<br>` +
+        `万舟トリガー: ${rangeText(c.validRanges['万舟トリガー'])}<br>` +
+        `3連複BOX: ${rangeText(c.validRanges['3連複BOX'])}<br>` +
+        `2連複: ${rangeText(c.validRanges['2連複'])}`;
+    }
+  } catch(e) {
+    document.getElementById('hf-info-text').textContent = '取得失敗';
+  }
+
 }
 
 async function saveSettings() {
