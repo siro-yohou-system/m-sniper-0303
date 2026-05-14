@@ -1067,27 +1067,6 @@ async function loadSettings() {
     document.getElementById("gas-status").className="badge badge-miss";
   }
 
-// 高精度フィルター条件を動的表示
-  try {
-    const hfData = await gasGet("getHFCache");
-    if (hfData.status === 'ok') {
-      const c = hfData.cache;
-      const venues = (c.validVenues || []).join('・') || 'なし';
-      const rangeText = (ranges) => {
-        if (!ranges || ranges.length === 0) return '<span style="color:var(--red)">送信しない</span>';
-        return ranges.join(', ') + '点帯';
-      };
-      document.getElementById('hf-info-text').innerHTML =
-        `対象会場: ${venues}<br>` +
-        `特異点逆目: ${rangeText(c.validRanges['特異点逆目'])}<br>` +
-        `万舟トリガー: ${rangeText(c.validRanges['万舟トリガー'])}<br>` +
-        `3連複BOX: ${rangeText(c.validRanges['3連複BOX'])}<br>` +
-        `2連複: ${rangeText(c.validRanges['2連複'])}`;
-    }
-  } catch(e) {
-    document.getElementById('hf-info-text').textContent = '取得失敗';
-  }
-
 }
 
 async function saveSettings() {
@@ -2286,7 +2265,6 @@ function onFilterModeChange() {
     isHighAccuracy ? 'var(--border)' : 'var(--cyan)';
   document.getElementById('filter-btn-a').style.color =
     isHighAccuracy ? 'var(--text2)' : 'var(--cyan)';
-
   document.getElementById('filter-btn-b').style.borderColor =
     isHighAccuracy ? 'var(--cyan)' : 'var(--border)';
   document.getElementById('filter-btn-b').style.color =
@@ -2298,8 +2276,8 @@ function onFilterModeChange() {
 
   // 通常フィルター設定をマスク
   const normalSettings = [
-    'threshold-row',        // 通知閾値スコア
-    'mantoku-threshold-row' // 万舟スコア下限
+    'threshold-row',
+    'mantoku-threshold-row'
   ];
   normalSettings.forEach(id => {
     const el = document.getElementById(id);
@@ -2307,7 +2285,6 @@ function onFilterModeChange() {
   });
 
   // 買い目タイプ別通知グループをマスク
-  // setting-group-titleが「買い目タイプ別通知」のグループ全体
   document.querySelectorAll('.setting-row').forEach(row => {
     const label = row.querySelector('.setting-label');
     if (!label) return;
@@ -2322,6 +2299,30 @@ function onFilterModeChange() {
       row.style.pointerEvents = isHighAccuracy ? 'none' : 'auto';
     }
   });
+
+  // 高精度モード時にキャッシュ取得
+  if (isHighAccuracy) {
+    const el = document.getElementById('hf-info-text');
+    if (el && el.textContent === '読み込み中...') {
+      gasGet("getHFCache").then(data => {
+        if (data.status !== 'ok') return;
+        const c = data.cache;
+        const venues = (c.validVenues || []).join('・') || 'なし';
+        const rangeText = (ranges) => {
+          if (!ranges || ranges.length === 0) return '<span style="color:var(--red)">送信しない</span>';
+          return ranges.join(', ') + '点帯';
+        };
+        el.innerHTML =
+          `対象会場: ${venues}<br>` +
+          `特異点逆目: ${rangeText(c.validRanges['特異点逆目'])}<br>` +
+          `万舟トリガー: ${rangeText(c.validRanges['万舟トリガー'])}<br>` +
+          `3連複BOX: ${rangeText(c.validRanges['3連複BOX'])}<br>` +
+          `2連複: ${rangeText(c.validRanges['2連複'])}`;
+      }).catch(() => {
+        el.textContent = '取得失敗';
+      });
+    }
+  }
 }
   
 // ── 初期ロード（確実に実行）
