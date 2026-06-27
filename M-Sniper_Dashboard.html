@@ -141,11 +141,20 @@ select:focus{border-color:var(--cyan)}
       <div class="card-title">最新解析結果</div>
       <div id="latest-analysis"><div class="loading">データ取得中</div></div>
     </div>
+ 
     <div class="card">
       <div class="card-title">本日のレーススケジュール</div>
       <div id="today-schedule"><div class="loading">スケジュール取得中</div></div>
     </div>
 
+    
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">🎯 高精度フィルター（HF）成績 — 過去7日</div>
+      <div id="hf-stats-wrap">
+        <div class="loading">データ取得中</div>
+      </div>
+    </div>
+    
     <div class="card" style="margin-top:14px">
       <div class="card-title">買い目タイプ別成績・収支推移</div>
 
@@ -806,8 +815,9 @@ async function loadDashboard() {
     if(schedData.status==="ok") renderSchedule(schedData.schedules);
     if(setData.status==="ok")   document.getElementById("m-threshold").textContent=(setData.settings.notify_threshold||70)+"%";
     document.getElementById("gas-status").textContent="接続OK";
-    document.getElementById("last-fetch").textContent=new Date().toLocaleTimeString("ja-JP");
+    document.getElementById("last-fetch").textContent=new Date().toLocaleTimeString("ja-JP")
     loadBetTypeStats();
+    loadHFStats();
   } catch(e) {
     showAlert("GASへの接続に失敗しました: " + e.message);
   }
@@ -1855,6 +1865,66 @@ function filterPerfRows(rows, period) {
   return rows.filter(r => r.date >= cutoffStr);
 }
 
+async function loadHFStats() {
+  const wrap = document.getElementById('hf-stats-wrap');
+  try {
+    const data = await gasGet('getHFStats');
+    if (!data || data.status !== 'ok') throw new Error('取得失敗');
+
+    const weekColor = data.weekRate >= 50 ? 'var(--green)'
+                    : data.weekRate >= 35 ? 'var(--amber)' : 'var(--red)';
+
+    const dayRows = data.days.map(d => {
+      if (d.total === 0) return `
+        <div style="display:flex;align-items:center;gap:10px;
+          padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="font-family:var(--font-mono);font-size:12px;
+            color:var(--text2);min-width:44px">${d.date}</div>
+          <div style="color:var(--text2);font-size:12px">対象なし</div>
+        </div>`;
+      const col = d.rate >= 50 ? 'var(--green)'
+                : d.rate >= 35 ? 'var(--amber)' : 'var(--red)';
+      return `
+        <div style="display:flex;align-items:center;gap:10px;
+          padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="font-family:var(--font-mono);font-size:12px;
+            color:var(--text2);min-width:44px">${d.date}</div>
+          <div style="flex:1">
+            <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${d.rate}%;
+                background:${col};border-radius:3px"></div>
+            </div>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:13px;
+            color:${col};font-weight:700;min-width:44px;text-align:right">
+            ${d.rate}%
+          </div>
+          <div style="font-family:var(--font-mono);font-size:11px;
+            color:var(--text2);min-width:50px;text-align:right">
+            ${d.hit}/${d.total}R
+          </div>
+        </div>`;
+    }).join('');
+
+    wrap.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;
+        padding:12px 0;border-bottom:2px solid var(--border);margin-bottom:10px">
+        <div style="font-size:13px;color:var(--text2)">週計</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-family:var(--font-mono);font-size:28px;
+            font-weight:700;color:${weekColor}">${data.weekRate}%</div>
+          <div style="font-family:var(--font-mono);font-size:13px;
+            color:var(--text2)">${data.weekHit}/${data.weekTotal}R</div>
+        </div>
+      </div>
+      ${dayRows}`;
+  } catch(e) {
+    wrap.innerHTML = `<div style="color:var(--red);padding:10px">
+      取得エラー: ${e.message}</div>`;
+  }
+}
+
+  
 // データ取得
 async function loadBetTypeStats() {
   try {
