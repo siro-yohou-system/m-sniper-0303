@@ -123,6 +123,7 @@ select:focus{border-color:var(--cyan)}
     <button class="nav-btn" onclick="showPage('venues',this)">会場別成績</button>
     <button class="nav-btn" onclick="showPage('matching',this)">照合分析</button>
     <button class="nav-btn" onclick="showPage('backtest',this)">照合・調整</button>
+    <button class="nav-btn" onclick="showPage('matrix',this)">出目マトリクス</button>
     <button class="nav-btn" onclick="showPage('settings',this)">設定</button>
   </nav>
 
@@ -654,10 +655,201 @@ select:focus{border-color:var(--cyan)}
 
   </div><!-- /#page-backtest [修正A: 閉じタグ位置を修正] -->
 
+<!-- ══════════════════════════════════════ RESULT MATRIX ══ -->
+<div class="page" id="page-matrix">
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">🎯 出目マトリクス検索</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">会場</div>
+        <select id="mx-venue" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none">
+          <option value="">全会場</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">風向(wind番号)</div>
+        <select id="mx-wind" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none">
+          <option value="">全風向</option>
+          <option value="1">wind1</option><option value="2">wind2</option>
+          <option value="3">wind3</option><option value="4">wind4</option>
+          <option value="5">wind5</option><option value="6">wind6</option>
+          <option value="7">wind7</option><option value="8">wind8</option>
+          <option value="9">wind9</option><option value="10">wind10</option>
+          <option value="11">wind11</option><option value="12">wind12</option>
+          <option value="13">wind13</option><option value="14">wind14</option>
+          <option value="15">wind15</option><option value="16">wind16</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">風速帯</div>
+        <select id="mx-speed" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none">
+          <option value="">全風速</option>
+          <option value="弱(0-2m)">弱(0-2m)</option>
+          <option value="中(3-4m)">中(3-4m)</option>
+          <option value="強(5m+)">強(5m+)</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">波高帯</div>
+        <select id="mx-wave" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none">
+          <option value="">全波高</option>
+          <option value="低(0-2cm)">低(0-2cm)</option>
+          <option value="中(3-5cm)">中(3-5cm)</option>
+          <option value="高(6cm+)">高(6cm+)</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">有効データのみ</div>
+        <select id="mx-valid" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none">
+          <option value="">全て</option>
+          <option value="○">30件以上(○)</option>
+        </select>
+      </div>
+      <button onclick="filterMatrix()" style="padding:8px 20px;background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(0,153,187,.1));border:1px solid rgba(0,212,255,.4);border-radius:7px;color:var(--cyan);font-family:var(--font-ja);font-size:13px;font-weight:700;cursor:pointer">
+        🔍 検索
+      </button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px" id="mx-summary-card" style="display:none">
+    <div class="card-title">📊 検索結果サマリー</div>
+    <div id="mx-summary"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">出目マトリクス
+      <span style="font-size:11px;color:var(--text2);margin-left:8px" id="mx-count"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>会場</th><th>wind</th><th>風速</th><th>波高</th><th>件数</th>
+            <th>1着1号</th><th>1着2号</th><th>1着3号</th><th>1着4号</th><th>1着5号</th><th>1着6号</th>
+            <th>推奨3連複①</th><th>推奨3連複②</th><th>推奨3連複③</th>
+            <th>除外艇</th><th>有効</th>
+          </tr>
+        </thead>
+        <tbody id="mx-table-body">
+          <tr><td colspan="16" style="text-align:center;padding:30px;color:var(--text2)">条件を選択して検索してください</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 </div><!-- /.wrap -->
 <div class="toast" id="toast"></div>
 
 <script>
+
+
+// ━━━ 出目マトリクス ━━━
+let _matrixData = [];
+
+async function loadMatrix() {
+  if (_matrixData.length > 0) {
+    renderMatrixVenueOptions();
+    filterMatrix();
+    return;
+  }
+  try {
+    const data = await gasGet('getResultMatrix');
+    if (data.status !== 'ok') throw new Error(data.error);
+    _matrixData = data.rows;
+    renderMatrixVenueOptions();
+    filterMatrix();
+  } catch(e) {
+    document.getElementById('mx-table-body').innerHTML =
+      `<tr><td colspan="16" style="text-align:center;padding:30px;color:var(--red)">取得エラー: ${e.message}</td></tr>`;
+  }
+}
+
+function renderMatrixVenueOptions() {
+  const venues = [...new Set(_matrixData.map(r => r['会場名']))].sort((a,b) => a.localeCompare(b,'ja'));
+  const sel = document.getElementById('mx-venue');
+  sel.innerHTML = '<option value="">全会場</option>' +
+    venues.map(v => `<option value="${v}">${v}</option>`).join('');
+}
+
+function filterMatrix() {
+  const venue = document.getElementById('mx-venue').value;
+  const wind  = document.getElementById('mx-wind').value;
+  const speed = document.getElementById('mx-speed').value;
+  const wave  = document.getElementById('mx-wave').value;
+  const valid = document.getElementById('mx-valid').value;
+
+  const filtered = _matrixData.filter(r => {
+    if (venue && r['会場名']  !== venue)          return false;
+    if (wind  && String(r['wind番号']) !== wind)  return false;
+    if (speed && r['風速帯']  !== speed)          return false;
+    if (wave  && r['波高帯']  !== wave)           return false;
+    if (valid && r['有効フラグ'] !== valid)        return false;
+    return true;
+  });
+
+  document.getElementById('mx-count').textContent = `${filtered.length}件`;
+
+  // サマリー
+  if (filtered.length > 0) {
+    const avgB1 = {};
+    for (let g = 1; g <= 6; g++) {
+      const vals = filtered.map(r => parseInt(r[`1着${g}号`]) || 0);
+      avgB1[g] = Math.round(vals.reduce((s,v)=>s+v,0) / vals.length);
+    }
+    const excludeAll = filtered.flatMap(r => (r['除外艇']||'').split(',').filter(Boolean).map(Number));
+    const excludeCount = {};
+    excludeAll.forEach(b => excludeCount[b] = (excludeCount[b]||0)+1);
+    const commonExclude = Object.entries(excludeCount)
+      .filter(([b,c]) => c >= filtered.length * 0.5)
+      .map(([b]) => b+'号艇').join('・');
+
+    document.getElementById('mx-summary').innerHTML = `
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px">
+        <div>平均1着率: ${[1,2,3,4,5,6].map(g=>`<span style="color:${g<=2?'var(--cyan)':g>=5?'var(--text2)':'var(--text)'}">${g}号:${avgB1[g]}%</span>`).join(' ')}</div>
+        ${commonExclude ? `<div style="color:var(--red)">共通除外推奨: ${commonExclude}</div>` : ''}
+      </div>`;
+    document.getElementById('mx-summary-card').style.display = 'block';
+  }
+
+  // テーブル
+  const tbody = document.getElementById('mx-table-body');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="16" style="text-align:center;padding:30px;color:var(--text2)">該当データなし</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => {
+    const vf    = r['有効フラグ'];
+    const vfCol = vf === '○' ? 'var(--green)' : 'var(--amber)';
+    const ex    = r['除外艇'] || '';
+
+    // 1着率の色付け
+    function rateColor(val) {
+      const n = parseInt(val) || 0;
+      return n >= 50 ? 'var(--green)' : n >= 30 ? 'var(--cyan)' : n >= 15 ? 'var(--text)' : 'var(--text2)';
+    }
+
+    return `<tr>
+      <td style="font-weight:700">${r['会場名']}</td>
+      <td style="font-family:var(--font-mono);color:var(--cyan)">wind${r['wind番号']}</td>
+      <td style="font-size:12px;color:var(--text2)">${r['風速帯']}</td>
+      <td style="font-size:12px;color:var(--text2)">${r['波高帯']}</td>
+      <td style="font-family:var(--font-mono);color:var(--text2)">${r['件数']}</td>
+      ${[1,2,3,4,5,6].map(g => {
+        const val = r[`1着${g}号`] || '0%';
+        return `<td style="font-family:var(--font-mono);color:${rateColor(val)};font-weight:700">${val}</td>`;
+      }).join('')}
+      <td style="font-size:12px;color:var(--cyan);font-family:var(--font-mono)">${r['推奨3連複1位']||'-'}</td>
+      <td style="font-size:12px;color:var(--text2);font-family:var(--font-mono)">${r['推奨3連複2位']||'-'}</td>
+      <td style="font-size:12px;color:var(--text2);font-family:var(--font-mono)">${r['推奨3連複3位']||'-'}</td>
+      <td style="color:var(--red);font-weight:700">${ex ? ex+'号艇' : '-'}</td>
+      <td style="color:${vfCol};font-weight:700">${vf}</td>
+    </tr>`;
+  }).join('');
+}
+
+  
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyl95PFSRL3ml3OjZOCrhuFIKqUhOUrBaKv0Y6ZgfzAJfIWyHs8ZmFstXhWj3aiH6Q2mg/exec";
 
 // ── 時計
@@ -680,6 +872,7 @@ function showPage(id, btn) {
   else if(id==="chart")    loadChart();
   else if(id==="matching") loadMatching();
   else if(id==="settings") loadSettings();
+  else if(id==="matrix") loadMatrix();
   else if(id==="backtest") { loadBacktestLog(); loadBacktestMaster(); }
 }
 
