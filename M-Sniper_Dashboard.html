@@ -817,44 +817,56 @@ async function loadTodayRaces() {
 }
 
 function applyRaceToMatrix() {
-  const sel   = document.getElementById('mx-race-select');
-  const idx   = sel.value;
+  const sel = document.getElementById('mx-race-select');
+  const idx = sel.value;
   if (idx === '') return;
 
   const race = _todayRaces[Number(idx)];
   if (!race) return;
 
-  // 検索条件に反映
+  // まず完全一致で検索
   document.getElementById('mx-venue').value = race.venue;
   document.getElementById('mx-wind').value  = String(race.windNum);
   document.getElementById('mx-speed').value = race.sBand;
   document.getElementById('mx-wave').value  = race.wBand;
   document.getElementById('mx-valid').value = '';
 
-  // レース情報表示
   document.getElementById('mx-race-info').innerHTML = `
     <span style="color:var(--cyan);font-weight:700">${race.venue} 第${race.raceNo}R</span>
     &nbsp;|&nbsp; 風向: <span style="color:var(--amber)">wind${race.windNum}（${race.windDir}）</span>
     &nbsp;|&nbsp; 風速: <span style="color:var(--amber)">${race.speed}m（${race.sBand}）</span>
     &nbsp;|&nbsp; 波高: <span style="color:var(--amber)">${race.wave}cm（${race.wBand}）</span>`;
 
-  // マトリクス検索実行
   filterMatrix();
 
-  // 検索結果が0件の場合は条件を緩める
-  const filtered = _matrixData.filter(r =>
-    r['会場名'] === race.venue &&
-    String(r['wind番号']) === String(race.windNum)
+  // 完全一致で0件 → 風速・波高を外してwind+会場のみ
+  const exact = _matrixData.filter(r =>
+    r['会場名']    === race.venue &&
+    String(r['wind番号']) === String(race.windNum) &&
+    r['風速帯']    === race.sBand &&
+    r['波高帯']    === race.wBand
   );
-  if (filtered.length === 0) {
-    // wind条件のみで再検索
-    document.getElementById('mx-wind').value  = String(race.windNum);
-    document.getElementById('mx-venue').value = race.venue;
+
+  if (exact.length === 0) {
     document.getElementById('mx-speed').value = '';
     document.getElementById('mx-wave').value  = '';
     filterMatrix();
-    document.getElementById('mx-race-info').innerHTML +=
-      '<span style="color:var(--amber)"> ※完全一致なし→wind条件のみで表示</span>';
+
+    const windOnly = _matrixData.filter(r =>
+      r['会場名'] === race.venue &&
+      String(r['wind番号']) === String(race.windNum)
+    );
+
+    if (windOnly.length === 0) {
+      // wind条件も外して会場のみ
+      document.getElementById('mx-wind').value = '';
+      filterMatrix();
+      document.getElementById('mx-race-info').innerHTML +=
+        ' <span style="color:var(--red)">※wind一致なし→会場全条件で表示</span>';
+    } else {
+      document.getElementById('mx-race-info').innerHTML +=
+        ' <span style="color:var(--amber)">※完全一致なし→wind条件のみで表示</span>';
+    }
   }
 }
 
