@@ -900,7 +900,11 @@ function filterMatrix() {
   if (filtered.length > 0) {
     const avgB1 = {};
     for (let g = 1; g <= 6; g++) {
-      const vals = filtered.map(r => parseInt(r[`1着${g}号`]) || 0);
+      const key = `1着${g}号`;
+      const vals = filtered.map(r => {
+        const v = r[key];
+        return parseInt(String(v).replace('%','')) || 0;
+      });
       avgB1[g] = Math.round(vals.reduce((s,v)=>s+v,0) / vals.length);
     }
     const excludeAll = filtered.flatMap(r => {
@@ -936,8 +940,8 @@ function filterMatrix() {
       ? String(r['除外艇']) : '';
 
     // 1着率の色付け
-    function rateColor(val) {
-      const n = parseInt(val) || 0;
+  function rateColor(val) {
+    const n = parseInt(String(val).replace('%','')) || 0;
       return n >= 50 ? 'var(--green)' : n >= 30 ? 'var(--cyan)' : n >= 15 ? 'var(--text)' : 'var(--text2)';
     }
 
