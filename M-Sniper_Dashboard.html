@@ -903,7 +903,11 @@ function filterMatrix() {
       const vals = filtered.map(r => parseInt(r[`1着${g}号`]) || 0);
       avgB1[g] = Math.round(vals.reduce((s,v)=>s+v,0) / vals.length);
     }
-    const excludeAll = filtered.flatMap(r => (r['除外艇']||'').split(',').filter(Boolean).map(Number));
+    const excludeAll = filtered.flatMap(r => {
+      const ex = r['除外艇'];
+      if (!ex && ex !== 0) return [];
+      return String(ex).split(',').filter(Boolean).map(Number);
+    });
     const excludeCount = {};
     excludeAll.forEach(b => excludeCount[b] = (excludeCount[b]||0)+1);
     const commonExclude = Object.entries(excludeCount)
@@ -928,7 +932,8 @@ function filterMatrix() {
   tbody.innerHTML = filtered.map(r => {
     const vf    = r['有効フラグ'];
     const vfCol = vf === '○' ? 'var(--green)' : 'var(--amber)';
-    const ex    = r['除外艇'] || '';
+    const ex = r['除外艇'] !== undefined && r['除外艇'] !== '' && r['除外艇'] !== null
+      ? String(r['除外艇']) : '';
 
     // 1着率の色付け
     function rateColor(val) {
