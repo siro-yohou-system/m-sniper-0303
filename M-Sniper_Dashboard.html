@@ -655,6 +655,28 @@ select:focus{border-color:var(--cyan)}
 
   </div><!-- /#page-backtest [修正A: 閉じタグ位置を修正] -->
 
+  
+<!-- レース選択カード -->
+<div class="card" style="margin-bottom:14px">
+  <div class="card-title">🏁 本日のレースから選択</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+    <div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px">レース選択</div>
+      <select id="mx-race-select" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--font-ja);outline:none;min-width:280px">
+        <option value="">レースを選択してください</option>
+      </select>
+    </div>
+    <button onclick="applyRaceToMatrix()" style="padding:8px 20px;background:linear-gradient(135deg,rgba(0,230,118,.2),rgba(0,153,100,.1));border:1px solid rgba(0,230,118,.4);border-radius:7px;color:var(--green);font-family:var(--font-ja);font-size:13px;font-weight:700;cursor:pointer">
+      ⚡ この条件で検索
+    </button>
+    <button onclick="loadTodayRaces()" style="padding:8px 14px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text2);font-family:var(--font-ja);font-size:13px;cursor:pointer">
+      🔄 更新
+    </button>
+  </div>
+  <div id="mx-race-info" style="margin-top:10px;font-size:12px;color:var(--text2)"></div>
+</div>
+
+  
 <!-- ══════════════════════════════════════ RESULT MATRIX ══ -->
 <div class="page" id="page-matrix">
   <div class="card" style="margin-bottom:14px">
@@ -751,6 +773,7 @@ async function loadMatrix() {
   if (_matrixData.length > 0) {
     renderMatrixVenueOptions();
     filterMatrix();
+    loadTodayRaces();
     return;
   }
   try {
@@ -763,8 +786,79 @@ async function loadMatrix() {
     document.getElementById('mx-table-body').innerHTML =
       `<tr><td colspan="16" style="text-align:center;padding:30px;color:var(--red)">取得エラー: ${e.message}</td></tr>`;
   }
+  loadTodayRaces();
 }
 
+
+
+let _todayRaces = [];
+
+async function loadTodayRaces() {
+  const sel = document.getElementById('mx-race-select');
+  sel.innerHTML = '<option value="">読み込み中...</option>';
+  try {
+    const data = await gasGet('getTodayRaceWeather');
+    if (data.status !== 'ok') throw new Error(data.error);
+    _todayRaces = data.races;
+
+    if (_todayRaces.length === 0) {
+      sel.innerHTML = '<option value="">本日のレースデータなし</option>';
+      return;
+    }
+
+    sel.innerHTML = '<option value="">レースを選択してください</option>' +
+      _todayRaces.map((r, i) =>
+        `<option value="${i}">${r.venue} 第${r.raceNo}R ` +
+        `wind${r.windNum} 風速${r.speed}m 波高${r.wave}cm</option>`
+      ).join('');
+  } catch(e) {
+    sel.innerHTML = `<option value="">取得エラー: ${e.message}</option>`;
+  }
+}
+
+function applyRaceToMatrix() {
+  const sel   = document.getElementById('mx-race-select');
+  const idx   = sel.value;
+  if (idx === '') return;
+
+  const race = _todayRaces[Number(idx)];
+  if (!race) return;
+
+  // 検索条件に反映
+  document.getElementById('mx-venue').value = race.venue;
+  document.getElementById('mx-wind').value  = String(race.windNum);
+  document.getElementById('mx-speed').value = race.sBand;
+  document.getElementById('mx-wave').value  = race.wBand;
+  document.getElementById('mx-valid').value = '';
+
+  // レース情報表示
+  document.getElementById('mx-race-info').innerHTML = `
+    <span style="color:var(--cyan);font-weight:700">${race.venue} 第${race.raceNo}R</span>
+    &nbsp;|&nbsp; 風向: <span style="color:var(--amber)">wind${race.windNum}（${race.windDir}）</span>
+    &nbsp;|&nbsp; 風速: <span style="color:var(--amber)">${race.speed}m（${race.sBand}）</span>
+    &nbsp;|&nbsp; 波高: <span style="color:var(--amber)">${race.wave}cm（${race.wBand}）</span>`;
+
+  // マトリクス検索実行
+  filterMatrix();
+
+  // 検索結果が0件の場合は条件を緩める
+  const filtered = _matrixData.filter(r =>
+    r['会場名'] === race.venue &&
+    String(r['wind番号']) === String(race.windNum)
+  );
+  if (filtered.length === 0) {
+    // wind条件のみで再検索
+    document.getElementById('mx-wind').value  = String(race.windNum);
+    document.getElementById('mx-venue').value = race.venue;
+    document.getElementById('mx-speed').value = '';
+    document.getElementById('mx-wave').value  = '';
+    filterMatrix();
+    document.getElementById('mx-race-info').innerHTML +=
+      '<span style="color:var(--amber)"> ※完全一致なし→wind条件のみで表示</span>';
+  }
+}
+
+  
 function renderMatrixVenueOptions() {
   const venues = [...new Set(_matrixData.map(r => r['会場名']))].sort((a,b) => a.localeCompare(b,'ja'));
   const sel = document.getElementById('mx-venue');
