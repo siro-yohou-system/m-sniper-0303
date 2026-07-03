@@ -918,7 +918,7 @@ function filterMatrix() {
       const n = parseFloat(v);
       return isNaN(n) ? 0 : n;
     });
-      avgB1[g] = Math.round(vals.reduce((s,v)=>s+v,0) / vals.length);
+      avgB1[g] = Math.round(vals.reduce((s,v)=>s+v,0) / vals.length) + '%';
     }
     const excludeAll = filtered.flatMap(r => {
       const ex = r['除外艇'];
