@@ -914,7 +914,7 @@ function filterMatrix() {
     for (let g = 1; g <= 6; g++) {
       const key = `1着${g}号`;
     const vals = filtered.map(r => {
-      const v = String(r[key] || '0').replace('%%','%').replace('%','');
+      const v = String(r[key] || '0').replace('%','');
       const n = parseFloat(v);
       return isNaN(n) ? 0 : n;
     });
