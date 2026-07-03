@@ -976,7 +976,7 @@ tbody.innerHTML = filtered.map(r => {
     <td style="font-size:12px;color:var(--text2)">${r['波高帯']}</td>
     <td style="font-family:var(--font-mono);color:var(--text2)">${r['件数']}</td>
     ${[1,2,3,4,5,6].map(g => {
-      const val = String(r[`1着${g}号`] || '0%').replace('%%','%');
+      const val = String(r[`1着${g}号`] || '0') + '%';
       return `<td style="font-family:var(--font-mono);color:${rateColor(val)};font-weight:700">${val}</td>`;
     }).join('')}
     <td style="font-size:12px;color:var(--cyan);font-family:var(--font-mono)">${r['推奨3連複1位']||'-'}</td>
