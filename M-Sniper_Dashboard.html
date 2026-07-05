@@ -2237,6 +2237,24 @@ async function loadHFStats() {
         </div>`;
     }).join('');
 
+    const wwConds = data.windWaveConditions || [];
+    const wwRows = wwConds.map(c => {
+      const col      = c.rate >= 60 ? 'var(--green)' : 'var(--amber)';
+      const windStr  = c.winds && c.winds.length > 0 ? `wind${c.winds.join('/')}` : '全風向';
+      const speedStr = c.speedMin > 0 ? `${c.speedMin}m+` : '-';
+      const waveStr  = c.waveMin  > 0 ? `${c.waveMin}cm+` : '-';
+      return `
+        <div style="display:flex;align-items:center;gap:8px;
+          padding:5px 0;border-bottom:0.5px solid var(--border)">
+          <div style="font-size:12px;color:var(--text);min-width:48px;font-weight:500">${c.venue}</div>
+          <div style="font-size:11px;color:var(--text2);min-width:52px">${windStr}</div>
+          <div style="font-size:11px;color:var(--text2);min-width:40px">風${speedStr}</div>
+          <div style="font-size:11px;color:var(--text2);flex:1">波${waveStr}</div>
+          <div style="font-family:var(--font-mono);font-size:13px;
+            color:${col};font-weight:700">${c.rate}%</div>
+        </div>`;
+    }).join('');
+
     wrap.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;
         padding:12px 0;border-bottom:2px solid var(--border);margin-bottom:10px">
@@ -2248,7 +2266,14 @@ async function loadHFStats() {
             color:var(--text2)">${data.weekHit}/${data.weekTotal}R</div>
         </div>
       </div>
-      ${dayRows}`;
+      ${dayRows}
+      ${wwConds.length > 0 ? `
+        <div style="margin-top:14px;padding-top:10px;border-top:2px solid var(--border)">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">
+            🌊 風速×波高 高的中率条件
+          </div>
+          ${wwRows}
+        </div>` : ''}`;
   } catch(e) {
     wrap.innerHTML = `<div style="color:var(--red);padding:10px">
       取得エラー: ${e.message}</div>`;
