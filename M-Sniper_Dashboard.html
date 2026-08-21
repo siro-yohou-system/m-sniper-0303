@@ -1163,11 +1163,17 @@ function renderCompanionCards() {
     wrap.innerHTML = '<div style="color:var(--text2);padding:20px">まだデータがありません</div>';
     return;
   }
-  const modeCompanionKey = { legacy: 'legacy', pmarket_k4: 'pmarket_k4', pmarket_k3: 'pmarket_k3' };
-  const modeHitKey = { legacy: 'legacyHit', pmarket_k4: 'pmk4Hit', pmarket_k3: 'pmk3Hit' };
+  const modeRankKey = { legacy: 'legacyRank', pmarket_k4: 'pmk4Rank', pmarket_k3: 'pmk3Rank' };
+  const modeHitKey  = { legacy: 'legacyHit', pmarket_k4: 'pmk4Hit', pmarket_k3: 'pmk3Hit' };
+  const labels = ['対抗', '穴1', '穴2', '他'];
 
   wrap.innerHTML = _cmCardsData.map(c => {
-    const companions = c[modeCompanionKey[_cmCurrentMode]] || '';
+    const rankStr = c[modeRankKey[_cmCurrentMode]] || '';
+    const rankBoats = rankStr ? rankStr.split(',') : [];
+    const companionHtml = rankBoats.length
+      ? rankBoats.map((b, i) => `<span style="font-size:11px;color:var(--text2)">${labels[i]||'他'}</span> <b>${b}</b>`).join('　')
+      : '（ランク情報なし・過去データ）';
+
     const hitFlag = c[modeHitKey[_cmCurrentMode]];
     const hitLabel = hitFlag === '○' ? '🎯的中' : hitFlag === '×' ? '不的中' : '未確定';
     const hitColor = hitFlag === '○' ? 'var(--green)' : hitFlag === '×' ? 'var(--text2)' : 'var(--amber)';
@@ -1175,7 +1181,8 @@ function renderCompanionCards() {
     return `
       <div class="card" style="padding:10px 14px;${isActual ? 'border-color:var(--cyan)' : ''}">
         <div style="font-size:11px;color:var(--text2)">${c.venueName} 第${c.raceNo}R ${isActual ? '（実弾）' : '（参考）'}</div>
-        <div style="font-size:14px;margin:4px 0">軸<b>${c.axis}</b> - 紐 <b>${companions}</b></div>
+        <div style="font-size:13px;margin:4px 0">軸<b>${c.axis}</b></div>
+        <div style="font-size:13px;margin:4px 0">${companionHtml}</div>
         <div style="font-size:11px;color:var(--text2)">score:${c.score}</div>
         <div style="font-size:12px;color:${hitColor};font-weight:600">${hitLabel}</div>
       </div>`;
