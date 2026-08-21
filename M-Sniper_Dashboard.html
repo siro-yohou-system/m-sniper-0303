@@ -125,6 +125,7 @@ select:focus{border-color:var(--cyan)}
     <button class="nav-btn" onclick="showPage('backtest',this)">照合・調整</button>
     <button class="nav-btn" onclick="showPage('matrix',this)">出目マトリクス</button>
     <button class="nav-btn" onclick="showPage('settings',this)">設定</button>
+    <button class="nav-btn" onclick="showPage('companion',this)">紐選定検証</button>
   </nav>
 
   <div class="alert-banner" id="alertBanner"></div>
@@ -261,6 +262,43 @@ select:focus{border-color:var(--cyan)}
       </div>
     </div>
 
+  <!-- ══════════════════════════════════════ COMPANION MODE ══ -->
+  <div class="page" id="page-companion">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">紐選定モード比較（legacy / P_market上位4艇 / P_market上位3艇）</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">
+        実弾は現在「<span id="cm-active-mode">--</span>」で運用中。他モードは裏でログのみ記録しています。
+      </div>
+      <div class="metrics-grid" id="cm-metrics-grid">
+        <div class="loading">データ取得中</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">直近レース（軸＋紐の比較）</div>
+      <div id="cm-subtabs" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="cm-btn active" data-mode="legacy"
+          style="padding:5px 14px;border:1px solid var(--cyan);background:rgba(0,212,255,.15);
+                 color:var(--cyan);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+          legacy
+        </button>
+        <button class="cm-btn" data-mode="pmarket_k4"
+          style="padding:5px 14px;border:1px solid var(--border);background:transparent;
+                 color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+          P_market×4艇
+        </button>
+        <button class="cm-btn" data-mode="pmarket_k3"
+          style="padding:5px 14px;border:1px solid var(--border);background:transparent;
+                 color:var(--text2);border-radius:16px;cursor:pointer;font-size:12px;font-family:var(--font-ja)">
+          P_market×3艇
+        </button>
+      </div>
+      <div id="cm-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
+        <div class="loading">データ取得中</div>
+      </div>
+    </div>
+  </div>
+    
     <!-- ━━━ 分析ダッシュボード ━━━ -->
     <div class="card" style="margin-top:14px">
       <div class="card-title">📊 スコア帯別的中率</div>
@@ -1012,6 +1050,7 @@ function showPage(id, btn) {
   else if(id==="settings") loadSettings();
   else if(id==="matrix") loadMatrix();
   else if(id==="backtest") { loadBacktestLog(); loadBacktestMaster(); }
+  else if(id==="companion") loadCompanionMode();
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1046,6 +1085,104 @@ function gasGet(action) {
   });
 }
 
+
+// ── 紐選定モード切り替え ──
+let _cmCurrentMode = 'legacy';
+let _cmCardsData = [];
+
+function initCompanionSubTabs() {
+  document.querySelectorAll('.cm-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cm-btn').forEach(b => {
+        b.classList.remove('active');
+        b.style.border = '1px solid var(--border)';
+        b.style.background = 'transparent';
+        b.style.color = 'var(--text2)';
+      });
+      btn.classList.add('active');
+      btn.style.border = '1px solid var(--cyan)';
+      btn.style.background = 'rgba(0,212,255,.15)';
+      btn.style.color = 'var(--cyan)';
+      _cmCurrentMode = btn.dataset.mode;
+      renderCompanionCards();
+    });
+  });
+}
+let _cmSubTabsInitialized = false;
+
+async function loadCompanionMode() {
+  document.getElementById('cm-metrics-grid').innerHTML = '<div class="loading">データ取得中</div>';
+  document.getElementById('cm-cards').innerHTML = '<div class="loading">データ取得中</div>';
+
+  if (!_cmSubTabsInitialized) {
+    initCompanionSubTabs();
+    _cmSubTabsInitialized = true;
+  }
+
+  try {
+    const data = await gasGet('getCompanionModeStats');
+    if (!data || data.status !== 'ok') {
+      document.getElementById('cm-metrics-grid').innerHTML =
+        '<div style="color:var(--red);padding:20px">⚠️ 取得エラー。COMPANION_MODE_TESTシートが未作成の可能性があります。</div>';
+      return;
+    }
+
+    const settings = await gasGet('getSettings');
+    const activeMode = (settings && settings.settings && settings.settings.companion_selection_mode) || 'legacy';
+    document.getElementById('cm-active-mode').textContent = activeMode;
+
+    renderCompanionMetrics(data.stats);
+    _cmCardsData = data.cards || [];
+    renderCompanionCards();
+
+  } catch (e) {
+    document.getElementById('cm-metrics-grid').innerHTML =
+      `<div style="color:var(--red);padding:20px">⚠️ 取得エラー: ${e.message || e}</div>`;
+  }
+}
+
+function renderCompanionMetrics(stats) {
+  const labels = { legacy: 'legacy', pmarket_k4: 'P_market×4艇', pmarket_k3: 'P_market×3艇' };
+  const colors = { legacy: 'cyan', pmarket_k4: 'green', pmarket_k3: 'amber' };
+  let html = '';
+  ['legacy', 'pmarket_k4', 'pmarket_k3'].forEach(m => {
+    const s = stats[m] || { n:0, hitRate:0, roi:0, profit:0 };
+    html += `
+      <div class="metric ${colors[m]}">
+        <div class="metric-label">${labels[m]}</div>
+        <div class="metric-value">${s.hitRate}%</div>
+        <div class="metric-sub">n=${s.n} ROI${s.roi}% 収支${s.profit>=0?'+':''}${s.profit.toLocaleString()}円</div>
+      </div>`;
+  });
+  document.getElementById('cm-metrics-grid').innerHTML = html;
+}
+
+function renderCompanionCards() {
+  const wrap = document.getElementById('cm-cards');
+  if (!_cmCardsData.length) {
+    wrap.innerHTML = '<div style="color:var(--text2);padding:20px">まだデータがありません</div>';
+    return;
+  }
+  const modeCompanionKey = { legacy: 'legacy', pmarket_k4: 'pmarket_k4', pmarket_k3: 'pmarket_k3' };
+  const modeHitKey = { legacy: 'legacyHit', pmarket_k4: 'pmk4Hit', pmarket_k3: 'pmk3Hit' };
+
+  wrap.innerHTML = _cmCardsData.map(c => {
+    const companions = c[modeCompanionKey[_cmCurrentMode]] || '';
+    const hitFlag = c[modeHitKey[_cmCurrentMode]];
+    const hitLabel = hitFlag === '○' ? '🎯的中' : hitFlag === '×' ? '不的中' : '未確定';
+    const hitColor = hitFlag === '○' ? 'var(--green)' : hitFlag === '×' ? 'var(--text2)' : 'var(--amber)';
+    const isActual = c.activeMode === _cmCurrentMode;
+    return `
+      <div class="card" style="padding:10px 14px;${isActual ? 'border-color:var(--cyan)' : ''}">
+        <div style="font-size:11px;color:var(--text2)">${c.venueName} 第${c.raceNo}R ${isActual ? '（実弾）' : '（参考）'}</div>
+        <div style="font-size:14px;margin:4px 0">軸<b>${c.axis}</b> - 紐 <b>${companions}</b></div>
+        <div style="font-size:11px;color:var(--text2)">score:${c.score}</div>
+        <div style="font-size:12px;color:${hitColor};font-weight:600">${hitLabel}</div>
+      </div>`;
+  }).join('');
+}
+  
+  
 // [追加] 追加パラメータ付きgasGet（getVenuesByDate用）
 function gasGetWithParam(action, param) {
   return new Promise((resolve, reject) => {
