@@ -264,6 +264,12 @@ select:focus{border-color:var(--cyan)}
 </div>
   <!-- ══════════════════════════════════════ COMPANION MODE ══ -->
   <div class="page" id="page-companion">
+        <div class="card" style="margin-bottom:14px">
+      <div class="card-title">直近の予想カード（軸の力量判定）</div>
+      <div id="pred-card-wrap">
+        <div class="loading">データ取得中</div>
+      </div>
+    </div>
     <div class="card" style="margin-bottom:14px">
       <div class="card-title">紐選定モード比較（legacy / P_market上位4艇 / P_market上位3艇）</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:12px">
@@ -1134,6 +1140,7 @@ async function loadCompanionMode() {
     renderCompanionMetrics(data.stats);
     _cmCardsData = data.cards || [];
     renderCompanionCards();
+    loadPredictionCard();  // ★この1行だけ追加
 
   } catch (e) {
     document.getElementById('cm-metrics-grid').innerHTML =
@@ -1141,6 +1148,43 @@ async function loadCompanionMode() {
   }
 }
 
+
+async function loadPredictionCard() {
+  const wrap = document.getElementById('pred-card-wrap');
+  try {
+    const data = await gasGet('getLatestPredictionCard');
+    if (!data || data.status !== 'ok' || !data.card) {
+      wrap.innerHTML = '<div style="color:var(--text2);padding:10px">まだデータがありません（updateAnalysisLogHeaderWithPredictionCard()未実行の可能性もあります）</div>';
+      return;
+    }
+    const c = data.card;
+    const formationLabel = c.formationType === 'trifecta'
+      ? '🎯3連単型（軸-対抗1,対抗2-全）'
+      : '📦3連複型（軸-対抗1,対抗2-全）';
+
+    wrap.innerHTML = `
+      <div style="font-size:13px;color:var(--cyan);margin-bottom:10px">${c.venueName} 第${c.raceNo}R　${formationLabel}</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>役割</th><th>艇番</th><th>複勝的中率</th><th>1着的中率</th></tr></thead>
+          <tbody>
+            <tr><td>軸</td><td><b>${c.axis.gate}</b></td><td>${c.axis.top3Rate}%</td><td>${c.axis.winRate}%</td></tr>
+            <tr><td>対抗1</td><td><b>${c.taikou1.gate}</b></td><td>${c.taikou1.top3Rate}%</td><td>-</td></tr>
+            <tr><td>対抗2</td><td><b>${c.taikou2.gate}</b></td><td>${c.taikou2.top3Rate}%</td><td>-</td></tr>
+            <tr><td>穴1</td><td><b>${c.ana1.gate}</b></td><td>${c.ana1.top3Rate}%</td><td>-</td></tr>
+            <tr><td>穴2</td><td><b>${c.ana2.gate}</b></td><td>${c.ana2.top3Rate}%</td><td>-</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px">
+        ※複勝的中率・1着的中率は過去データに基づく期待値（実測平均）です。このレース固有の数値ではありません。
+      </div>`;
+  } catch (e) {
+    wrap.innerHTML = `<div style="color:var(--red);padding:10px">⚠️ 取得エラー: ${e.message || e}</div>`;
+  }
+}
+  
+  
 function renderCompanionMetrics(stats) {
   const labels = { legacy: 'legacy', pmarket_k4: 'P_market×4艇', pmarket_k3: 'P_market×3艇' };
   const colors = { legacy: 'cyan', pmarket_k4: 'green', pmarket_k3: 'amber' };
