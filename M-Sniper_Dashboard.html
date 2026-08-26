@@ -338,8 +338,15 @@ select:focus{border-color:var(--cyan)}
   <div class="page" id="page-predcards">
     <div class="card" style="margin-bottom:14px">
       <div class="card-title">予想カード一覧（直近30レース・的中照合）</div>
-      <div style="font-size:12px;color:var(--text2)">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">
         🎯=3連単型（軸の1着期待が高い）　📦=3連複型（軸の複勝期待が高い）
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label class="toggle">
+          <input type="checkbox" id="predcards-hf-toggle" onchange="renderPredictionCards()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span style="font-size:13px;color:var(--text)">高精度フィルター(HF)通過レースのみ表示</span>
       </div>
     </div>
     <div id="predcards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
@@ -2973,6 +2980,8 @@ function _predRoleRow(label, roleColor, boat) {
     </div>`;
 }
 
+let _predCardsData = [];
+
 async function loadPredictionCards() {
   const grid = document.getElementById('predcards-grid');
   grid.innerHTML = '<div class="loading">データ取得中</div>';
@@ -2982,32 +2991,51 @@ async function loadPredictionCards() {
       grid.innerHTML = '<div style="color:var(--red);padding:20px">⚠️ 取得エラー</div>';
       return;
     }
-    if (!data.cards.length) {
-      grid.innerHTML = '<div style="color:var(--text2);padding:20px">まだ予想カードがありません</div>';
-      return;
-    }
+    _predCardsData = data.cards || [];
+    renderPredictionCards();
+  } catch (e) {
+    grid.innerHTML = `<div style="color:var(--red);padding:20px">⚠️ 取得エラー: ${e.message || e}</div>`;
+  }
+}
 
-    grid.innerHTML = data.cards.map(c => {
-      const formationIcon = c.formationType === 'trifecta' ? '🎯3連単型' : '📦3連複型';
-      const resultLine = c.result
-        ? `<div style="font-size:11px;color:var(--text2);margin-top:4px">実際の着順: ${c.result}</div>`
-        : `<div style="font-size:11px;color:var(--amber);margin-top:4px">結果未確定</div>`;
+function renderPredictionCards() {
+  const grid = document.getElementById('predcards-grid');
+  const hfOnly = document.getElementById('predcards-hf-toggle').checked;
 
-      return `
-        <div class="card" style="padding:12px 14px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <span style="font-size:14px;font-weight:700">${c.venueName} 第${c.raceNo}R</span>
-            <span style="font-size:11px;color:var(--cyan)">${formationIcon}</span>
-          </div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${c.dateStr} ${c.raceTime || ''}</div>
-          ${_predRoleRow('軸',   'var(--cyan)',   c.axis)}
-          ${_predRoleRow('対抗1', 'var(--green)',  c.taikou1)}
-          ${_predRoleRow('対抗2', 'var(--green)',  c.taikou2)}
-          ${_predRoleRow('穴1',  'var(--amber)',  c.ana1)}
-          ${_predRoleRow('穴2',  'var(--amber)',  c.ana2)}
-          ${resultLine}
-        </div>`;
-    }).join('');
+  const filtered = hfOnly ? _predCardsData.filter(c => c.hfPass) : _predCardsData;
+
+  if (!filtered.length) {
+    grid.innerHTML = hfOnly
+      ? '<div style="color:var(--text2);padding:20px">HF通過レースがまだありません</div>'
+      : '<div style="color:var(--text2);padding:20px">まだ予想カードがありません</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(c => {
+    const formationIcon = c.formationType === 'trifecta' ? '🎯3連単型' : '📦3連複型';
+    const hfBadge = c.hfPass
+      ? '<span style="font-size:10px;color:var(--green);border:1px solid var(--green);border-radius:10px;padding:1px 8px;margin-left:6px">HF通過</span>'
+      : '';
+    const resultLine = c.result
+      ? `<div style="font-size:11px;color:var(--text2);margin-top:4px">実際の着順: ${c.result}</div>`
+      : `<div style="font-size:11px;color:var(--amber);margin-top:4px">結果未確定</div>`;
+
+    return `
+      <div class="card" style="padding:12px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:14px;font-weight:700">${c.venueName} 第${c.raceNo}R${hfBadge}</span>
+          <span style="font-size:11px;color:var(--cyan)">${formationIcon}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${c.dateStr} ${c.raceTime || ''}</div>
+        ${_predRoleRow('軸',   'var(--cyan)',   c.axis)}
+        ${_predRoleRow('対抗1', 'var(--green)',  c.taikou1)}
+        ${_predRoleRow('対抗2', 'var(--green)',  c.taikou2)}
+        ${_predRoleRow('穴1',  'var(--amber)',  c.ana1)}
+        ${_predRoleRow('穴2',  'var(--amber)',  c.ana2)}
+        ${resultLine}
+      </div>`;
+  }).join('');
+}
 
   } catch (e) {
     grid.innerHTML = `<div style="color:var(--red);padding:20px">⚠️ 取得エラー: ${e.message || e}</div>`;
