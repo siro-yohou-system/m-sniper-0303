@@ -3037,12 +3037,6 @@ function renderPredictionCards() {
   }).join('');
 }
 
-  } catch (e) {
-    grid.innerHTML = `<div style="color:var(--red);padding:20px">⚠️ 取得エラー: ${e.message || e}</div>`;
-  }
-}
-
-
   
 // ── 初期ロード（確実に実行）
 window.addEventListener("load", () => { loadDashboard(); });
