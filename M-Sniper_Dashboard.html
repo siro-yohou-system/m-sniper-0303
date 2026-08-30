@@ -2998,33 +2998,66 @@ async function loadPredictionCards() {
   }
 }
 
+
+function _cardRankBadge(cardRank) {
+  if (!cardRank || cardRank.rank === '-') {
+    return '<span style="font-size:10px;color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:1px 8px">判定不可</span>';
+  }
+  const RANK_COLORS = {
+    SSR: '#ffd700', SR: '#c084fc', R: '#60a5fa',
+    UC: '#4ade80', C: '#94a3b8', VC: '#64748b'
+  };
+  const color = RANK_COLORS[cardRank.rank] || '#94a3b8';
+  const tip = `会場${cardRank.venuePercentile ?? '-'}%ile / スコア帯${cardRank.scorePercentile ?? '-'}%ile`;
+  return `<span title="${tip}"
+            style="font-size:11px;font-weight:800;color:#000;background:${color};
+                   border-radius:10px;padding:1px 10px;letter-spacing:0.5px">${cardRank.rank}</span>`;
+}
+ 
+function _formationHitBadge(c) {
+  if (c.result === null) {
+    return '<span style="font-size:11px;color:var(--amber)">結果未確定</span>';
+  }
+  const typeLabel = c.formationType === 'trifecta' ? '🎯3連単' : '📦3連複';
+  return c.formationHit
+    ? `<span style="font-size:12px;font-weight:700;color:var(--green)">${typeLabel} 的中</span>`
+    : `<span style="font-size:12px;color:var(--text2)">${typeLabel} 不的中</span>`;
+}
+ 
 function renderPredictionCards() {
   const grid = document.getElementById('predcards-grid');
   const hfOnly = document.getElementById('predcards-hf-toggle').checked;
-
+ 
   const filtered = hfOnly ? _predCardsData.filter(c => c.hfPass) : _predCardsData;
-
+ 
   if (!filtered.length) {
     grid.innerHTML = hfOnly
       ? '<div style="color:var(--text2);padding:20px">HF通過レースがまだありません</div>'
       : '<div style="color:var(--text2);padding:20px">まだ予想カードがありません</div>';
     return;
   }
-
+ 
   grid.innerHTML = filtered.map(c => {
     const formationIcon = c.formationType === 'trifecta' ? '🎯3連単型' : '📦3連複型';
     const hfBadge = c.hfPass
       ? '<span style="font-size:10px;color:var(--green);border:1px solid var(--green);border-radius:10px;padding:1px 8px;margin-left:6px">HF通過</span>'
       : '';
+    const noBetBadge = c.hasActualBet
+      ? ''
+      : '<span style="font-size:10px;color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:1px 8px;margin-left:6px" title="実際には見送り(SKIP)されたレースです。表示は参考情報です。">参考表示</span>';
     const resultLine = c.result
       ? `<div style="font-size:11px;color:var(--text2);margin-top:4px">実際の着順: ${c.result}</div>`
       : `<div style="font-size:11px;color:var(--amber);margin-top:4px">結果未確定</div>`;
-
+ 
     return `
       <div class="card" style="padding:12px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:14px;font-weight:700">${c.venueName} 第${c.raceNo}R</span>
+          ${_cardRankBadge(c.cardRank)}
+        </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:14px;font-weight:700">${c.venueName} 第${c.raceNo}R${hfBadge}</span>
-          <span style="font-size:11px;color:var(--cyan)">${formationIcon}</span>
+          <span style="font-size:11px;color:var(--cyan)">${formationIcon}${hfBadge}${noBetBadge}</span>
+          ${_formationHitBadge(c)}
         </div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${c.dateStr} ${c.raceTime || ''}</div>
         ${_predRoleRow('軸',   'var(--cyan)',   c.axis)}
@@ -3036,7 +3069,7 @@ function renderPredictionCards() {
       </div>`;
   }).join('');
 }
-
+ 
   
 // ── 初期ロード（確実に実行）
 window.addEventListener("load", () => { loadDashboard(); });
