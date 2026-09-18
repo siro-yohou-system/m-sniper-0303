@@ -337,19 +337,42 @@ select:focus{border-color:var(--cyan)}
   <!-- ══════════════════════════════════════ PREDICTION CARDS ══ -->
   <div class="page" id="page-predcards">
     <div class="card" style="margin-bottom:14px">
-      <div class="card-title">予想カード一覧（直近30レース・的中照合）</div>
+      <div class="card-title">予想カード一覧（的中照合）</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px">
         🎯=3連単型（軸の1着期待が高い）　📦=3連複型（軸の複勝期待が高い）
       </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <label class="toggle">
-          <input type="checkbox" id="predcards-hf-toggle" onchange="renderPredictionCards()">
-          <span class="toggle-slider"></span>
-        </label>
-        <span style="font-size:13px;color:var(--text)">高精度フィルター(HF)通過レースのみ表示</span>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--text)">集計期間</span>
+          <select id="predcards-period-select" onchange="onPredCardsPeriodChange()"
+            style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja)">
+            <option value="1">1日</option>
+            <option value="3" selected>3日</option>
+            <option value="7">7日</option>
+            <option value="14">14日</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--text)">カードランク</span>
+          <select id="predcards-rank-select" onchange="renderPredictionCardsSummary();renderPredictionCards()"
+            style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja)">
+            <option value="ALL">全ランク</option>
+            <option value="SSR">SSRのみ</option>
+            <option value="SR">SR以上</option>
+            <option value="R">R以上</option>
+            <option value="UC">UC以上</option>
+            <option value="C">C以上</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label class="toggle">
+            <input type="checkbox" id="predcards-hf-toggle" onchange="renderPredictionCards()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span style="font-size:13px;color:var(--text)">高精度フィルター(HF)通過レースのみ表示</span>
+        </div>
       </div>
     </div>
-
     <div class="card" style="margin-bottom:14px">
       <div class="card-title">予想カード的中率サマリー</div>
       <div class="metrics-grid" id="predcards-summary-grid">
@@ -3012,14 +3035,21 @@ function _predRoleRow(label, roleColor, boat, matrixUsedRoles) {
 
 let _predCardsData = [];
 let _predCardsSummary = null;
+const PREDCARD_RANK_ORDER = ['SSR','SR','R','UC','C','VC','-'];
 
-async function loadPredictionCards() {
+function onPredCardsPeriodChange() {
+  const days = document.getElementById('predcards-period-select').value;
+  loadPredictionCards(days);
+}
+
+async function loadPredictionCards(days) {
+  days = days || document.getElementById('predcards-period-select').value || 3;
   const grid = document.getElementById('predcards-grid');
   grid.innerHTML = '<div class="loading">データ取得中</div>';
   const summaryWrap = document.getElementById('predcards-summary-grid');
   if (summaryWrap) summaryWrap.innerHTML = '<div class="loading">データ取得中</div>';
   try {
-    const data = await gasGet('getPredictionCards');
+    const data = await gasGetWithParam('getPredictionCards', days);
     if (!data || data.status !== 'ok') {
       grid.innerHTML = '<div style="color:var(--red);padding:20px">⚠️ 取得エラー</div>';
       return;
@@ -3033,42 +3063,66 @@ async function loadPredictionCards() {
   }
 }
 
+// 選択中のランク閾値以上（SSR側が上位）を満たすか判定
+function _predCardMeetsRankThreshold(rank, threshold) {
+  if (threshold === 'ALL') return true;
+  const rIdx = PREDCARD_RANK_ORDER.indexOf(rank || '-');
+  const tIdx = PREDCARD_RANK_ORDER.indexOf(threshold);
+  if (rIdx === -1 || tIdx === -1) return false;
+  return rIdx <= tIdx; // 配列の並び順＝SSRが最上位
+}
 
-function _cardRankBadge(cardRank) {
-  if (!cardRank || cardRank.rank === '-') {
-    return '<span style="font-size:10px;color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:1px 8px">判定不可</span>';
-  }
-  const RANK_COLORS = {
-    SSR: '#ffd700', SR: '#c084fc', R: '#60a5fa',
-    UC: '#4ade80', C: '#94a3b8', VC: '#64748b'
-  };
-  const color = RANK_COLORS[cardRank.rank] || '#94a3b8';
-  const tip = `会場${cardRank.venuePercentile ?? '-'}%ile / スコア帯${cardRank.scorePercentile ?? '-'}%ile`;
-  return `<span title="${tip}"
-            style="font-size:11px;font-weight:800;color:#000;background:${color};
-                   border-radius:10px;padding:1px 10px;letter-spacing:0.5px">${cardRank.rank}</span>`;
+function renderPredictionCardsSummary() {
+  const wrap = document.getElementById('predcards-summary-grid');
+  if (!wrap || !_predCardsSummary) return;
+  const s = _predCardsSummary;
+  const threshold = document.getElementById('predcards-rank-select').value;
+
+  // ランク閾値に応じてbyRankから合算
+  let rankTotal = 0, rankHit = 0;
+  PREDCARD_RANK_ORDER.forEach(r => {
+    if (_predCardMeetsRankThreshold(r, threshold)) {
+      const b = s.byRank[r] || { total:0, hit:0 };
+      rankTotal += b.total;
+      rankHit += b.hit;
+    }
+  });
+  const rankRate = rankTotal > 0 ? Math.round(rankHit / rankTotal * 1000) / 10 : 0;
+
+  const rateColor = s.rate >= 50 ? 'var(--green)' : s.rate >= 30 ? 'var(--amber)' : 'var(--red)';
+  const hfColor = s.hfRate >= 50 ? 'var(--green)' : s.hfRate >= 30 ? 'var(--amber)' : 'var(--red)';
+  const rankColor = rankRate >= 50 ? 'var(--green)' : rankRate >= 30 ? 'var(--amber)' : 'var(--red)';
+  const rankLabel = threshold === 'ALL' ? '全ランク' : threshold + '以上';
+
+  wrap.innerHTML = `
+    <div class="metric cyan">
+      <div class="metric-label">全体的中率（直近${s.days}日）</div>
+      <div class="metric-value" style="color:${rateColor}">${s.rate}%</div>
+      <div class="metric-sub">${s.hit} / ${s.total} R（結果確定分）</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">HF通過分の的中率</div>
+      <div class="metric-value" style="color:${hfColor}">${s.hfRate}%</div>
+      <div class="metric-sub">${s.hfHit} / ${s.hfTotal} R</div>
+    </div>
+    <div class="metric purple">
+      <div class="metric-label">カードランク ${rankLabel} の的中率</div>
+      <div class="metric-value" style="color:${rankColor}">${rankRate}%</div>
+      <div class="metric-sub">${rankHit} / ${rankTotal} R</div>
+    </div>`;
 }
- 
-function _formationHitBadge(c) {
-  if (c.result === null) {
-    return '<span style="font-size:11px;color:var(--amber)">結果未確定</span>';
-  }
-  const typeLabel = c.formationType === 'trifecta' ? '🎯3連単' : '📦3連複';
-  return c.formationHit
-    ? `<span style="font-size:12px;font-weight:700;color:var(--green)">${typeLabel} 的中</span>`
-    : `<span style="font-size:12px;color:var(--text2)">${typeLabel} 不的中</span>`;
-}
- 
+
 function renderPredictionCards() {
   const grid = document.getElementById('predcards-grid');
   const hfOnly = document.getElementById('predcards-hf-toggle').checked;
+  const rankThreshold = document.getElementById('predcards-rank-select').value;
 
-  const filtered = hfOnly ? _predCardsData.filter(c => c.hfPass) : _predCardsData;
+  let filtered = _predCardsData;
+  if (hfOnly) filtered = filtered.filter(c => c.hfPass);
+  filtered = filtered.filter(c => _predCardMeetsRankThreshold(c.cardRank && c.cardRank.rank, rankThreshold));
 
   if (!filtered.length) {
-    grid.innerHTML = hfOnly
-      ? '<div style="color:var(--text2);padding:20px">HF通過レースがまだありません</div>'
-      : '<div style="color:var(--text2);padding:20px">まだ予想カードがありません</div>';
+    grid.innerHTML = '<div style="color:var(--text2);padding:20px">条件に合うレースがまだありません</div>';
     return;
   }
 
