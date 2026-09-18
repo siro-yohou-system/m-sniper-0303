@@ -2969,13 +2969,16 @@ function _predHitBadge(hit) {
     : '<span style="color:var(--text2)">✗不的中</span>';
 }
 
-function _predRoleRow(label, roleColor, boat) {
+function _predRoleRow(label, roleColor, boat, matrixUsedRoles) {
+  const matrixBadge = (matrixUsedRoles || []).includes(label)
+    ? '<span style="font-size:9px;color:var(--green);border:1px solid var(--green);border-radius:8px;padding:0 5px;margin-left:4px">実測</span>'
+    : '';
   return `
     <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
       <span style="width:34px;font-size:11px;font-weight:700;color:${roleColor}">${label}</span>
       <span style="width:26px;height:26px;border-radius:50%;background:${roleColor};color:#000;
                     display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">${boat.gate ?? '-'}</span>
-      <span style="font-size:11px;color:var(--text2);flex:1">複勝期待${boat.top3Rate ?? '-'}%${boat.winRate!=null?` / 単勝期待${boat.winRate}%`:''}</span>
+      <span style="font-size:11px;color:var(--text2);flex:1">複勝期待${boat.top3Rate ?? '-'}%${boat.winRate!=null?` / 単勝期待${boat.winRate}%`:''}${matrixBadge}</span>
       <span style="font-size:11px">${_predHitBadge(boat.hit)}</span>
     </div>`;
 }
@@ -3027,18 +3030,23 @@ function _formationHitBadge(c) {
 function renderPredictionCards() {
   const grid = document.getElementById('predcards-grid');
   const hfOnly = document.getElementById('predcards-hf-toggle').checked;
- 
+
   const filtered = hfOnly ? _predCardsData.filter(c => c.hfPass) : _predCardsData;
- 
+
   if (!filtered.length) {
     grid.innerHTML = hfOnly
       ? '<div style="color:var(--text2);padding:20px">HF通過レースがまだありません</div>'
       : '<div style="color:var(--text2);padding:20px">まだ予想カードがありません</div>';
     return;
   }
- 
+
   grid.innerHTML = filtered.map(c => {
     const formationIcon = c.formationType === 'trifecta' ? '🎯3連単型' : '📦3連複型';
+    const rTagBadge = c.rValueTag === 'SINGULARITY'
+      ? '<span style="font-size:10px;color:#ffd700;border:1px solid #ffd700;border-radius:10px;padding:1px 8px;margin-left:6px">⚡特異点</span>'
+      : (c.rValueTag === '10k-TRIGGER' || c.rValueTag === 'GOLD_DUST')
+      ? '<span style="font-size:10px;color:#f5a623;border:1px solid #f5a623;border-radius:10px;padding:1px 8px;margin-left:6px">🎰万舟</span>'
+      : '';
     const hfBadge = c.hfPass
       ? '<span style="font-size:10px;color:var(--green);border:1px solid var(--green);border-radius:10px;padding:1px 8px;margin-left:6px">HF通過</span>'
       : '';
@@ -3048,7 +3056,7 @@ function renderPredictionCards() {
     const resultLine = c.result
       ? `<div style="font-size:11px;color:var(--text2);margin-top:4px">実際の着順: ${c.result}</div>`
       : `<div style="font-size:11px;color:var(--amber);margin-top:4px">結果未確定</div>`;
- 
+
     return `
       <div class="card" style="padding:12px 14px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -3056,15 +3064,15 @@ function renderPredictionCards() {
           ${_cardRankBadge(c.cardRank)}
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:11px;color:var(--cyan)">${formationIcon}${hfBadge}${noBetBadge}</span>
+          <span style="font-size:11px;color:var(--cyan)">${formationIcon}${rTagBadge}${hfBadge}${noBetBadge}</span>
           ${_formationHitBadge(c)}
         </div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${c.dateStr} ${c.raceTime || ''}</div>
-        ${_predRoleRow('軸',   'var(--cyan)',   c.axis)}
-        ${_predRoleRow('対抗1', 'var(--green)',  c.taikou1)}
-        ${_predRoleRow('対抗2', 'var(--green)',  c.taikou2)}
-        ${_predRoleRow('穴1',  'var(--amber)',  c.ana1)}
-        ${_predRoleRow('穴2',  'var(--amber)',  c.ana2)}
+        ${_predRoleRow('軸',   'var(--cyan)',  c.axis,    c.matrixUsedRoles)}
+        ${_predRoleRow('対抗1', 'var(--green)', c.taikou1, c.matrixUsedRoles)}
+        ${_predRoleRow('対抗2', 'var(--green)', c.taikou2, c.matrixUsedRoles)}
+        ${_predRoleRow('穴1',  'var(--amber)', c.ana1,    c.matrixUsedRoles)}
+        ${_predRoleRow('穴2',  'var(--amber)', c.ana2,    c.matrixUsedRoles)}
         ${resultLine}
       </div>`;
   }).join('');
