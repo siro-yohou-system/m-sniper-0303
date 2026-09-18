@@ -349,6 +349,14 @@ select:focus{border-color:var(--cyan)}
         <span style="font-size:13px;color:var(--text)">高精度フィルター(HF)通過レースのみ表示</span>
       </div>
     </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">予想カード的中率サマリー</div>
+      <div class="metrics-grid" id="predcards-summary-grid">
+        <div class="loading">データ取得中</div>
+      </div>
+    </div>
+
     <div id="predcards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
       <div class="loading">データ取得中</div>
     </div>
@@ -2969,6 +2977,25 @@ function _predHitBadge(hit) {
     : '<span style="color:var(--text2)">✗不的中</span>';
 }
 
+function renderPredictionCardsSummary() {
+  const wrap = document.getElementById('predcards-summary-grid');
+  if (!wrap || !_predCardsSummary) return;
+  const s = _predCardsSummary;
+  const rateColor = s.rate >= 50 ? 'var(--green)' : s.rate >= 30 ? 'var(--amber)' : 'var(--red)';
+  const hfColor = s.hfRate >= 50 ? 'var(--green)' : s.hfRate >= 30 ? 'var(--amber)' : 'var(--red)';
+  wrap.innerHTML = `
+    <div class="metric cyan">
+      <div class="metric-label">予想カード 全体的中率</div>
+      <div class="metric-value" style="color:${rateColor}">${s.rate}%</div>
+      <div class="metric-sub">${s.hit} / ${s.total} R（結果確定分）</div>
+    </div>
+    <div class="metric green">
+      <div class="metric-label">予想カード HF通過分の的中率</div>
+      <div class="metric-value" style="color:${hfColor}">${s.hfRate}%</div>
+      <div class="metric-sub">${s.hfHit} / ${s.hfTotal} R</div>
+    </div>`;
+}
+  
 function _predRoleRow(label, roleColor, boat, matrixUsedRoles) {
   const matrixBadge = (matrixUsedRoles || []).includes(label)
     ? '<span style="font-size:9px;color:var(--green);border:1px solid var(--green);border-radius:8px;padding:0 5px;margin-left:4px">実測</span>'
@@ -2984,10 +3011,13 @@ function _predRoleRow(label, roleColor, boat, matrixUsedRoles) {
 }
 
 let _predCardsData = [];
+let _predCardsSummary = null;
 
 async function loadPredictionCards() {
   const grid = document.getElementById('predcards-grid');
   grid.innerHTML = '<div class="loading">データ取得中</div>';
+  const summaryWrap = document.getElementById('predcards-summary-grid');
+  if (summaryWrap) summaryWrap.innerHTML = '<div class="loading">データ取得中</div>';
   try {
     const data = await gasGet('getPredictionCards');
     if (!data || data.status !== 'ok') {
@@ -2995,6 +3025,8 @@ async function loadPredictionCards() {
       return;
     }
     _predCardsData = data.cards || [];
+    _predCardsSummary = data.summary || null;
+    renderPredictionCardsSummary();
     renderPredictionCards();
   } catch (e) {
     grid.innerHTML = `<div style="color:var(--red);padding:20px">⚠️ 取得エラー: ${e.message || e}</div>`;
