@@ -871,6 +871,19 @@ select:focus{border-color:var(--cyan)}
 // ━━━ 出目マトリクス ━━━
 let _matrixData = [];
 
+// RESULT_MATRIXのパーセントセルを表示用に安全に変換する
+// (Google Sheetsがパーセント文字列を自動で0-1の数値に変換して保存するケースに対応)
+function _parsePercentDisplay(raw) {
+  if (raw === '' || raw === null || raw === undefined) return 0;
+  let n;
+  if (typeof raw === 'number') {
+    n = raw > 1.5 ? raw : raw * 100; // 0.15→15、15→15 のどちらでも対応
+  } else {
+    n = parseFloat(String(raw).replace('%','')) || 0;
+  }
+  return Math.round(n);
+}
+
 async function loadMatrix() {
   if (_matrixData.length > 0) {
     renderMatrixVenueOptions();
@@ -1009,13 +1022,10 @@ function filterMatrix() {
     const avgB1 = {};
     for (let g = 1; g <= 6; g++) {
       const key = `1着${g}号`;
-    const vals = filtered.map(r => {
-      const v = String(r[key] || '0').replace('%','');
-      const n = parseFloat(v);
-      return isNaN(n) ? 0 : n;
-    });
+      const vals = filtered.map(r => _parsePercentDisplay(r[key]));
       avgB1[g] = Math.round(vals.reduce((s,v)=>s+v,0) / vals.length) + '%';
     }
+
     const excludeAll = filtered.flatMap(r => {
       const ex = r['除外艇'];
       if (!ex && ex !== 0) return [];
@@ -1072,7 +1082,7 @@ tbody.innerHTML = filtered.map(r => {
     <td style="font-size:12px;color:var(--text2)">${r['波高帯']}</td>
     <td style="font-family:var(--font-mono);color:var(--text2)">${r['件数']}</td>
     ${[1,2,3,4,5,6].map(g => {
-      const val = String(r[`1着${g}号`] || '0') + '%';
+      const val = _parsePercentDisplay(r[`1着${g}号`]) + '%';
       return `<td style="font-family:var(--font-mono);color:${rateColor(val)};font-weight:700">${val}</td>`;
     }).join('')}
     <td style="font-size:12px;color:var(--cyan);font-family:var(--font-mono)">${r['推奨3連複1位']||'-'}</td>
