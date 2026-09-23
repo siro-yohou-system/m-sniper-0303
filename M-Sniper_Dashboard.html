@@ -334,88 +334,88 @@ select:focus{border-color:var(--cyan)}
   </div>
 
 
-  <!-- ══════════════════════════════════════ PREDICTION CARDS ══ -->
-  <div class="page" id="page-predcards">
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-title">予想カード一覧（的中照合）</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">
-        🎯=3連単型（軸の1着期待が高い）　📦=3連複型（軸の複勝期待が高い）
+<!-- ══════════════════════════════════════ PREDICTION CARDS ══ -->
+<div class="page" id="page-predcards">
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">予想カード一覧（的中照合）</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:10px">
+      🎯=3連単型（軸の1着期待が高い）　📦=3連複型（軸の複勝期待が高い）
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;color:var(--text)">集計期間</span>
+        <select id="predcards-period-select" onchange="onPredCardsPeriodChange()"
+          style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja)">
+          <option value="1">1日</option>
+          <option value="3" selected>3日</option>
+          <option value="7">7日</option>
+          <option value="14">14日</option>
+        </select>
       </div>
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:8px">
-<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-  <div style="display:flex;align-items:center;gap:8px">
-    <span style="font-size:12px;color:var(--text)">集計期間</span>
-    <select id="predcards-period-select" onchange="onPredCardsPeriodChange()"
-      style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja)">
-      <option value="1">1日</option>
-      <option value="3" selected>3日</option>
-      <option value="7">7日</option>
-      <option value="14">14日</option>
-    </select>
-  </div>
 
-  <!-- ★追加：特定日付指定 -->
-  <div style="display:flex;align-items:center;gap:8px">
-    <span style="font-size:12px;color:var(--text)">日付指定</span>
-    <input type="date" id="predcards-date-input" onchange="onPredCardsDateChange()"
-      style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-mono)">
-    <button onclick="clearPredCardsDate()" style="padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">解除</button>
-  </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;color:var(--text)">日付指定</span>
+        <input type="date" id="predcards-date-input" onchange="onPredCardsDateChange()"
+          style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-mono)">
+        <button onclick="clearPredCardsDate()" style="padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">解除</button>
+      </div>
 
-  <!-- ★追加：会場マルチセレクト -->
-  <div style="display:flex;align-items:center;gap:8px">
-    <span style="font-size:12px;color:var(--text)">会場</span>
-    <select id="predcards-venue-select" multiple onchange="onPredCardsVenueChange()"
-      style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja);min-width:140px;height:32px">
-      <option value="桐生">桐生</option><option value="戸田">戸田</option>
-      <option value="江戸川">江戸川</option><option value="平和島">平和島</option>
-      <option value="多摩川">多摩川</option><option value="浜名湖">浜名湖</option>
-      <option value="蒲郡">蒲郡</option><option value="常滑">常滑</option>
-      <option value="津">津</option><option value="三国">三国</option>
-      <option value="びわこ">びわこ</option><option value="住之江">住之江</option>
-      <option value="尼崎">尼崎</option><option value="鳴門">鳴門</option>
-      <option value="丸亀">丸亀</option><option value="児島">児島</option>
-      <option value="宮島">宮島</option><option value="徳山">徳山</option>
-      <option value="下関">下関</option><option value="若松">若松</option>
-      <option value="芦屋">芦屋</option><option value="福岡">福岡</option>
-      <option value="唐津">唐津</option><option value="大村">大村</option>
-    </select>
-    <span style="font-size:10px;color:var(--text2)">(Ctrl/Cmd+クリックで複数選択)</span>
-  </div>
+      <!-- ★会場：ボタン+チェックボックスドロップダウン式に変更 -->
+      <div style="position:relative" id="predcards-venue-wrap">
+        <span style="font-size:12px;color:var(--text);margin-right:6px">会場</span>
+        <button id="predcards-venue-btn" onclick="togglePredCardsVenueDropdown(event)"
+          style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;font-family:var(--font-ja);cursor:pointer;min-width:110px;text-align:left">
+          <span id="predcards-venue-btn-label">全会場</span> ▾
+        </button>
+        <div id="predcards-venue-dropdown"
+          style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:100;
+                 background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+                 padding:8px;width:220px;max-height:320px;overflow-y:auto;
+                 box-shadow:0 8px 24px rgba(0,0,0,.5)">
+          <div id="predcards-venue-checklist" style="display:flex;flex-direction:column;gap:2px"></div>
+          <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;display:flex;gap:8px">
+            <button onclick="clearPredCardsVenues()"
+              style="flex:1;padding:5px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">全解除</button>
+            <button onclick="closePredCardsVenueDropdown()"
+              style="flex:1;padding:5px;background:rgba(0,212,255,.15);border:1px solid var(--cyan);border-radius:6px;color:var(--cyan);font-size:11px;cursor:pointer">閉じる</button>
+          </div>
+        </div>
+      </div>
 
-  <div style="display:flex;align-items:center;gap:8px">
-    <span style="font-size:12px;color:var(--text)">カードランク</span>
-    <select id="predcards-rank-select" onchange="renderPredictionCardsSummary();renderPredictionCards()"
-      style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja)">
-      <option value="ALL">全ランク</option>
-      <option value="SSR">SSRのみ</option>
-      <option value="SR">SR以上</option>
-      <option value="R">R以上</option>
-      <option value="UC">UC以上</option>
-      <option value="C">C以上</option>
-    </select>
-  </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;color:var(--text)">カードランク</span>
+        <select id="predcards-rank-select" onchange="renderPredictionCardsSummary();renderPredictionCards()"
+          style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja)">
+          <option value="ALL">全ランク</option>
+          <option value="SSR">SSRのみ</option>
+          <option value="SR">SR以上</option>
+          <option value="R">R以上</option>
+          <option value="UC">UC以上</option>
+          <option value="C">C以上</option>
+        </select>
+      </div>
 
-  <div style="display:flex;align-items:center;gap:10px">
-    <label class="toggle">
-      <input type="checkbox" id="predcards-hf-toggle" onchange="renderPredictionCards()">
-      <span class="toggle-slider"></span>
-    </label>
-    <span style="font-size:13px;color:var(--text)">高精度フィルター(HF)通過レースのみ表示</span>
-  </div>
-</div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-title">予想カード的中率サマリー</div>
-      <div class="metrics-grid" id="predcards-summary-grid">
-        <div class="loading">データ取得中</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label class="toggle">
+          <input type="checkbox" id="predcards-hf-toggle" onchange="renderPredictionCards()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span style="font-size:13px;color:var(--text)">高精度フィルター(HF)通過レースのみ表示</span>
       </div>
     </div>
+  </div>
 
-    <div id="predcards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">予想カード的中率サマリー</div>
+    <div class="metrics-grid" id="predcards-summary-grid">
       <div class="loading">データ取得中</div>
     </div>
   </div>
+
+  <div id="predcards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+    <div class="loading">データ取得中</div>
+  </div>
+</div>
 
   
 
@@ -3129,13 +3129,68 @@ function clearPredCardsDate() {
   loadPredictionCards();
 }
 
-function onPredCardsVenueChange() {
+const PREDCARD_VENUES = [
+  '桐生','戸田','江戸川','平和島','多摩川','浜名湖','蒲郡','常滑',
+  '津','三国','びわこ','住之江','尼崎','鳴門','丸亀','児島',
+  '宮島','徳山','下関','若松','芦屋','福岡','唐津','大村'
+];
+let _predCardsSelectedVenues = [];
+
+function _initPredCardsVenueChecklist() {
+  const wrap = document.getElementById('predcards-venue-checklist');
+  if (!wrap || wrap.children.length > 0) return; // 初期化済みなら何もしない
+  wrap.innerHTML = PREDCARD_VENUES.map(v => `
+    <label style="display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:13px;color:var(--text)"
+      onmouseover="this.style.background='rgba(0,212,255,.08)'" onmouseout="this.style.background='transparent'">
+      <input type="checkbox" value="${v}" onchange="onPredCardsVenueCheckboxChange()" style="accent-color:var(--cyan)">
+      ${v}
+    </label>`).join('');
+}
+
+function togglePredCardsVenueDropdown(e) {
+  if (e) e.stopPropagation();
+  _initPredCardsVenueChecklist();
+  const dd = document.getElementById('predcards-venue-dropdown');
+  const isOpen = dd.style.display === 'block';
+  dd.style.display = isOpen ? 'none' : 'block';
+}
+
+function closePredCardsVenueDropdown() {
+  document.getElementById('predcards-venue-dropdown').style.display = 'none';
+}
+
+// ドロップダウン外をクリックしたら閉じる
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('predcards-venue-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    const dd = document.getElementById('predcards-venue-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
+
+function onPredCardsVenueCheckboxChange() {
+  const checked = document.querySelectorAll('#predcards-venue-checklist input:checked');
+  _predCardsSelectedVenues = Array.from(checked).map(c => c.value);
+  const label = document.getElementById('predcards-venue-btn-label');
+  if (_predCardsSelectedVenues.length === 0) {
+    label.textContent = '全会場';
+  } else if (_predCardsSelectedVenues.length <= 2) {
+    label.textContent = _predCardsSelectedVenues.join('・');
+  } else {
+    label.textContent = _predCardsSelectedVenues.length + '会場選択中';
+  }
+  loadPredictionCards();
+}
+
+function clearPredCardsVenues() {
+  document.querySelectorAll('#predcards-venue-checklist input:checked').forEach(c => c.checked = false);
+  _predCardsSelectedVenues = [];
+  document.getElementById('predcards-venue-btn-label').textContent = '全会場';
   loadPredictionCards();
 }
 
 function _getSelectedVenues() {
-  const sel = document.getElementById('predcards-venue-select');
-  return Array.from(sel.selectedOptions).map(o => o.value);
+  return _predCardsSelectedVenues;
 }
 
 async function loadPredictionCards() {
