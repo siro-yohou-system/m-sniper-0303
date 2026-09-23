@@ -343,36 +343,68 @@ select:focus{border-color:var(--cyan)}
       </div>
       <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:12px;color:var(--text)">集計期間</span>
-          <select id="predcards-period-select" onchange="onPredCardsPeriodChange()"
-            style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja)">
-            <option value="1">1日</option>
-            <option value="3" selected>3日</option>
-            <option value="7">7日</option>
-            <option value="14">14日</option>
-          </select>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:12px;color:var(--text)">カードランク</span>
-          <select id="predcards-rank-select" onchange="renderPredictionCardsSummary();renderPredictionCards()"
-            style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja)">
-            <option value="ALL">全ランク</option>
-            <option value="SSR">SSRのみ</option>
-            <option value="SR">SR以上</option>
-            <option value="R">R以上</option>
-            <option value="UC">UC以上</option>
-            <option value="C">C以上</option>
-          </select>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <label class="toggle">
-            <input type="checkbox" id="predcards-hf-toggle" onchange="renderPredictionCards()">
-            <span class="toggle-slider"></span>
-          </label>
-          <span style="font-size:13px;color:var(--text)">高精度フィルター(HF)通過レースのみ表示</span>
-        </div>
-      </div>
-    </div>
+<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:12px;color:var(--text)">集計期間</span>
+    <select id="predcards-period-select" onchange="onPredCardsPeriodChange()"
+      style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja)">
+      <option value="1">1日</option>
+      <option value="3" selected>3日</option>
+      <option value="7">7日</option>
+      <option value="14">14日</option>
+    </select>
+  </div>
+
+  <!-- ★追加：特定日付指定 -->
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:12px;color:var(--text)">日付指定</span>
+    <input type="date" id="predcards-date-input" onchange="onPredCardsDateChange()"
+      style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-mono)">
+    <button onclick="clearPredCardsDate()" style="padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">解除</button>
+  </div>
+
+  <!-- ★追加：会場マルチセレクト -->
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:12px;color:var(--text)">会場</span>
+    <select id="predcards-venue-select" multiple onchange="onPredCardsVenueChange()"
+      style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja);min-width:140px;height:32px">
+      <option value="桐生">桐生</option><option value="戸田">戸田</option>
+      <option value="江戸川">江戸川</option><option value="平和島">平和島</option>
+      <option value="多摩川">多摩川</option><option value="浜名湖">浜名湖</option>
+      <option value="蒲郡">蒲郡</option><option value="常滑">常滑</option>
+      <option value="津">津</option><option value="三国">三国</option>
+      <option value="びわこ">びわこ</option><option value="住之江">住之江</option>
+      <option value="尼崎">尼崎</option><option value="鳴門">鳴門</option>
+      <option value="丸亀">丸亀</option><option value="児島">児島</option>
+      <option value="宮島">宮島</option><option value="徳山">徳山</option>
+      <option value="下関">下関</option><option value="若松">若松</option>
+      <option value="芦屋">芦屋</option><option value="福岡">福岡</option>
+      <option value="唐津">唐津</option><option value="大村">大村</option>
+    </select>
+    <span style="font-size:10px;color:var(--text2)">(Ctrl/Cmd+クリックで複数選択)</span>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:12px;color:var(--text)">カードランク</span>
+    <select id="predcards-rank-select" onchange="renderPredictionCardsSummary();renderPredictionCards()"
+      style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font-ja)">
+      <option value="ALL">全ランク</option>
+      <option value="SSR">SSRのみ</option>
+      <option value="SR">SR以上</option>
+      <option value="R">R以上</option>
+      <option value="UC">UC以上</option>
+      <option value="C">C以上</option>
+    </select>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px">
+    <label class="toggle">
+      <input type="checkbox" id="predcards-hf-toggle" onchange="renderPredictionCards()">
+      <span class="toggle-slider"></span>
+    </label>
+    <span style="font-size:13px;color:var(--text)">高精度フィルター(HF)通過レースのみ表示</span>
+  </div>
+</div>
     <div class="card" style="margin-bottom:14px">
       <div class="card-title">予想カード的中率サマリー</div>
       <div class="metrics-grid" id="predcards-summary-grid">
@@ -1295,7 +1327,42 @@ function renderCompanionCards() {
       </div>`;
   }).join('');
 }
+
   
+// 予想カード専用：日付・会場・期間を渡せる拡張版fetch
+function gasGetPredictionCards(opts) {
+  return new Promise((resolve, reject) => {
+    const cbName = "_cbpc_" + Date.now();
+    const script = document.createElement("script");
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if (document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error("タイムアウト: getPredictionCards"));
+    }, 20000);
+    window[cbName] = (data) => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (document.body.contains(script)) document.body.removeChild(script);
+      resolve(data);
+    };
+    const params = new URLSearchParams();
+    params.set('action', 'getPredictionCards');
+    params.set('callback', cbName);
+    if (opts.days) params.set('days', opts.days);
+    if (opts.targetDate) params.set('targetDate', opts.targetDate); // 'YYYY-MM-DD'
+    if (opts.venues && opts.venues.length) params.set('venues', opts.venues.join(','));
+    script.src = `${GAS_URL}?${params.toString()}`;
+    script.onerror = () => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error("スクリプト読み込みエラー: getPredictionCards"));
+    };
+    document.body.appendChild(script);
+  });
+}
+
+
+
   
 // [追加] 追加パラメータ付きgasGet（getVenuesByDate用）
 function gasGetWithParam(action, param) {
@@ -3048,18 +3115,44 @@ let _predCardsSummary = null;
 const PREDCARD_RANK_ORDER = ['SSR','SR','R','UC','C','VC','-'];
 
 function onPredCardsPeriodChange() {
-  const days = document.getElementById('predcards-period-select').value;
-  loadPredictionCards(days);
+  // 期間セレクトを使う＝日付指定はクリア
+  document.getElementById('predcards-date-input').value = '';
+  loadPredictionCards();
 }
 
-async function loadPredictionCards(days) {
-  days = days || document.getElementById('predcards-period-select').value || 3;
+function onPredCardsDateChange() {
+  loadPredictionCards();
+}
+
+function clearPredCardsDate() {
+  document.getElementById('predcards-date-input').value = '';
+  loadPredictionCards();
+}
+
+function onPredCardsVenueChange() {
+  loadPredictionCards();
+}
+
+function _getSelectedVenues() {
+  const sel = document.getElementById('predcards-venue-select');
+  return Array.from(sel.selectedOptions).map(o => o.value);
+}
+
+async function loadPredictionCards() {
   const grid = document.getElementById('predcards-grid');
   grid.innerHTML = '<div class="loading">データ取得中</div>';
   const summaryWrap = document.getElementById('predcards-summary-grid');
   if (summaryWrap) summaryWrap.innerHTML = '<div class="loading">データ取得中</div>';
+
+  const targetDate = document.getElementById('predcards-date-input').value; // '' or 'YYYY-MM-DD'
+  const venues = _getSelectedVenues();
+  const days = document.getElementById('predcards-period-select').value || 3;
+
   try {
-    const data = await gasGetWithParam('getPredictionCards', days);
+    const opts = targetDate
+      ? { targetDate, venues }
+      : { days, venues };
+    const data = await gasGetPredictionCards(opts);
     if (!data || data.status !== 'ok') {
       grid.innerHTML = '<div style="color:var(--red);padding:20px">⚠️ 取得エラー</div>';
       return;
