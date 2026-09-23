@@ -395,15 +395,21 @@ select:focus{border-color:var(--cyan)}
         </select>
       </div>
 
-      <div style="display:flex;align-items:center;gap:10px">
-        <label class="toggle">
-          <input type="checkbox" id="predcards-hf-toggle" onchange="renderPredictionCards()">
-          <span class="toggle-slider"></span>
-        </label>
-        <span style="font-size:13px;color:var(--text)">高精度フィルター(HF)通過レースのみ表示</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label class="toggle">
+            <input type="checkbox" id="predcards-hf-toggle" onchange="renderPredictionCards()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span style="font-size:13px;color:var(--text)">高精度フィルター(HF)通過レースのみ表示</span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--text)">HF基準(会場的中率%)</span>
+          <input type="number" id="predcards-hf-threshold-input" min="0" max="100" step="5" value="60"
+            style="width:60px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;font-family:var(--font-mono)">
+          <button onclick="savePredCardsHFThreshold()" style="padding:4px 10px;background:rgba(0,212,255,.15);border:1px solid var(--cyan);border-radius:6px;color:var(--cyan);font-size:11px;cursor:pointer">保存</button>
+        </div>
       </div>
-    </div>
-  </div>
 
   <div class="card" style="margin-bottom:14px">
     <div class="card-title">予想カード的中率サマリー</div>
@@ -1151,7 +1157,7 @@ function showPage(id, btn) {
   else if(id==="matrix") loadMatrix();
   else if(id==="backtest") { loadBacktestLog(); loadBacktestMaster(); }
   else if(id==="companion") loadCompanionMode();
-  else if(id==="predcards") loadPredictionCards();
+  else if(id==="predcards") { loadPredictionCards(); loadPredCardsHFThreshold(); }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3100,12 +3106,21 @@ function _predRoleRow(label, roleColor, boat, matrixUsedRoles) {
   const matrixBadge = (matrixUsedRoles || []).includes(label)
     ? '<span style="font-size:9px;color:var(--green);border:1px solid var(--green);border-radius:8px;padding:0 5px;margin-left:4px">実測</span>'
     : '';
+  const top3Color = (boat.top3Rate != null && boat.top3Rate >= 50) ? 'var(--amber)' : 'var(--text2)';
+  const winColor  = (boat.winRate  != null && boat.winRate  >= 50) ? 'var(--amber)' : 'var(--text2)';
+  const top3Weight = (boat.top3Rate != null && boat.top3Rate >= 50) ? '700' : '400';
+  const winWeight  = (boat.winRate  != null && boat.winRate  >= 50) ? '700' : '400';
+  const winPart = boat.winRate != null
+    ? ` / <span style="color:${winColor};font-weight:${winWeight}">単勝期待${boat.winRate}%</span>`
+    : '';
   return `
     <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
       <span style="width:34px;font-size:11px;font-weight:700;color:${roleColor}">${label}</span>
       <span style="width:26px;height:26px;border-radius:50%;background:${roleColor};color:#000;
                     display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">${boat.gate ?? '-'}</span>
-      <span style="font-size:11px;color:var(--text2);flex:1">複勝期待${boat.top3Rate ?? '-'}%${boat.winRate!=null?` / 単勝期待${boat.winRate}%`:''}${matrixBadge}</span>
+      <span style="font-size:11px;flex:1">
+        <span style="color:${top3Color};font-weight:${top3Weight}">複勝期待${boat.top3Rate ?? '-'}%</span>${winPart}${matrixBadge}
+      </span>
       <span style="font-size:11px">${_predHitBadge(boat.hit)}</span>
     </div>`;
 }
@@ -3221,6 +3236,29 @@ async function loadPredictionCards() {
   }
 }
 
+
+async function loadPredCardsHFThreshold() {
+  try {
+    const data = await gasGet('getSettings');
+    if (data.status === 'ok') {
+      const th = Number(data.settings.predcard_hf_threshold) || 60;
+      document.getElementById('predcards-hf-threshold-input').value = th;
+    }
+  } catch(e) {}
+}
+
+async function savePredCardsHFThreshold() {
+  const th = Number(document.getElementById('predcards-hf-threshold-input').value) || 60;
+  try {
+    await gasPost({ action: 'saveSettings', settings: { predcard_hf_threshold: th } });
+    showToast('✅ HF基準を保存しました（' + th + '%）');
+    loadPredictionCards();
+  } catch(e) {
+    showToast('❌ 保存に失敗しました');
+  }
+}
+
+  
 // 選択中のランク閾値以上（SSR側が上位）を満たすか判定
 function _predCardMeetsRankThreshold(rank, threshold) {
   if (threshold === 'ALL') return true;
@@ -3326,8 +3364,8 @@ function renderPredictionCards() {
       ? ''
       : '<span style="font-size:10px;color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:1px 8px;margin-left:6px" title="実際には見送り(SKIP)されたレースです。表示は参考情報です。">参考表示</span>';
     const resultLine = c.result
-      ? `<div style="font-size:11px;color:var(--text2);margin-top:4px">実際の着順: ${c.result}</div>`
-      : `<div style="font-size:11px;color:var(--amber);margin-top:4px">結果未確定</div>`;
+      ? `<div style="font-size:14px;font-weight:700;color:var(--text);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">実際の着順: <span style="color:var(--cyan)">${c.result}</span></div>`
+      : `<div style="font-size:13px;font-weight:700;color:var(--amber);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">結果未確定</div>`;
 
     return `
       <div class="card" style="padding:12px 14px">
