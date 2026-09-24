@@ -3082,7 +3082,6 @@ function _predHitBadge(hit) {
     ? '<span style="color:var(--green);font-weight:700">🎯的中</span>'
     : '<span style="color:var(--text2)">✗不的中</span>';
 }
-
 function renderPredictionCardsSummary() {
   const wrap = document.getElementById('predcards-summary-grid');
   if (!wrap || !_predCardsSummary) return;
@@ -3100,6 +3099,7 @@ function renderPredictionCardsSummary() {
       <div class="metric-value" style="color:${hfColor}">${s.hfRate}%</div>
       <div class="metric-sub">${s.hfHit} / ${s.hfTotal} R</div>
     </div>`;
+} // ★ここに閉じカッコを追加してrenderPredictionCardsSummaryを終える
 
 function _renderPredCardsHFVenueRate() {
   const el = document.getElementById('predcards-hf-venue-rate');
@@ -3124,10 +3124,6 @@ function _renderPredCardsHFVenueRate() {
   const color = pass ? 'var(--green)' : 'var(--red)';
   el.innerHTML = `${venues[0]}の直近30日的中率: <span style="color:${color};font-weight:700">${v.rate}%</span>（${v.hit}/${v.total}R）${pass ? ' ✓基準クリア' : ' ✗基準未達'}`;
 }
-
-  
-}
-  
 function _predRoleRow(label, roleColor, boat, matrixUsedRoles) {
   const matrixBadge = (matrixUsedRoles || []).includes(label)
     ? '<span style="font-size:9px;color:var(--green);border:1px solid var(--green);border-radius:8px;padding:0 5px;margin-left:4px">実測</span>'
