@@ -402,13 +402,13 @@ select:focus{border-color:var(--cyan)}
           </label>
           <span style="font-size:13px;color:var(--text)">高精度フィルター(HF)通過レースのみ表示</span>
         </div>
-
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:12px;color:var(--text)">HF基準(会場的中率%)</span>
-          <input type="number" id="predcards-hf-threshold-input" min="0" max="100" step="5" value="60"
-            style="width:60px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;font-family:var(--font-mono)">
-          <button onclick="savePredCardsHFThreshold()" style="padding:4px 10px;background:rgba(0,212,255,.15);border:1px solid var(--cyan);border-radius:6px;color:var(--cyan);font-size:11px;cursor:pointer">保存</button>
-        </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;color:var(--text)">HF基準(会場的中率%)</span>
+            <input type="number" id="predcards-hf-threshold-input" min="0" max="100" step="5" value="60"
+              style="width:60px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;font-family:var(--font-mono)">
+            <button onclick="savePredCardsHFThreshold()" style="padding:4px 10px;background:rgba(0,212,255,.15);border:1px solid var(--cyan);border-radius:6px;color:var(--cyan);font-size:11px;cursor:pointer">保存</button>
+            <span id="predcards-hf-venue-rate" style="font-size:11px;color:var(--text2)"></span>
+          </div>
       </div>
 
   <div class="card" style="margin-bottom:14px">
@@ -3100,6 +3100,32 @@ function renderPredictionCardsSummary() {
       <div class="metric-value" style="color:${hfColor}">${s.hfRate}%</div>
       <div class="metric-sub">${s.hfHit} / ${s.hfTotal} R</div>
     </div>`;
+
+function _renderPredCardsHFVenueRate() {
+  const el = document.getElementById('predcards-hf-venue-rate');
+  if (!el || !_predCardsSummary) return;
+
+  const venues = _getSelectedVenues();
+  const hfVenueStats = _predCardsSummary.hfVenueStats || [];
+  const threshold = _predCardsSummary.hfThreshold;
+
+  if (venues.length !== 1) {
+    el.textContent = venues.length > 1 ? '（複数会場選択中は個別表示なし）' : '';
+    return;
+  }
+
+  const v = hfVenueStats.find(x => x.name === venues[0]);
+  if (!v) {
+    el.innerHTML = `<span style="color:var(--text2)">${venues[0]}: 直近30日データ不足</span>`;
+    return;
+  }
+
+  const pass = v.rate >= threshold;
+  const color = pass ? 'var(--green)' : 'var(--red)';
+  el.innerHTML = `${venues[0]}の直近30日的中率: <span style="color:${color};font-weight:700">${v.rate}%</span>（${v.hit}/${v.total}R）${pass ? ' ✓基準クリア' : ' ✗基準未達'}`;
+}
+
+  
 }
   
 function _predRoleRow(label, roleColor, boat, matrixUsedRoles) {
@@ -3230,6 +3256,7 @@ async function loadPredictionCards() {
     _predCardsData = data.cards || [];
     _predCardsSummary = data.summary || null;
     renderPredictionCardsSummary();
+    _renderPredCardsHFVenueRate(); // ★追加
     renderPredictionCards();
   } catch (e) {
     grid.innerHTML = `<div style="color:var(--red);padding:20px">⚠️ 取得エラー: ${e.message || e}</div>`;
