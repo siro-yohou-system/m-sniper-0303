@@ -3329,9 +3329,56 @@ function renderPredictionCardsSummary() {
       <div class="metric-value" style="color:${rankColor}">${rankRate}%</div>
       <div class="metric-sub">${rankHit} / ${rankTotal} R</div>
     </div>`;
+
+    wrap.insertAdjacentHTML('beforeend', _pairAdviceSummaryHtml());
+  
 }
 
 
+// 拡連複アドバイス表示(検証中)
+function _pairAdviceHtml(c) {
+  const a = c.pairAdvice;
+  if (!a) return '';
+  const isGo = a.verdict === 'GO';
+  const col = isGo ? 'var(--green)' : 'var(--text2)';
+  let body;
+  if (!a.pair) {
+    body = '<span style="color:var(--text2)">候補なし（確率40%以上の組が無い、または基準未満）</span>';
+  } else {
+    const boats = a.pair.split('・').map(Number);
+    let hit = '';
+    if (c.result) {
+      const top3 = c.result.split('-').map(Number);
+      hit = boats.every(b => top3.includes(b))
+        ? ' <span style="color:var(--green);font-weight:700">🎯的中</span>'
+        : ' <span style="color:var(--text2)">✗不的中</span>';
+    }
+    const be = a.p > 0 ? (1 / a.p).toFixed(2) : '-';
+    body = `<b style="font-size:13px">${boats.join('-')}</b>　確率${(a.p * 100).toFixed(0)}%　損益分岐${be}倍　EV${a.ev.toFixed(2)}${hit}`;
+  }
+  return `<div style="margin-top:8px;padding:6px 8px;border:1px dashed ${col};border-radius:6px;font-size:11px;color:${col}">
+    <span style="font-weight:700">拡連複 ${a.verdict}</span>
+    <span style="font-size:9px;opacity:.8;margin-left:4px">検証中・14分前オッズ基準</span><br>${body}</div>`;
+}
+
+// サマリー用: 拡連複GOの的中率(回収率は払戻が画面側にないため未算出)
+function _pairAdviceSummaryHtml() {
+  let go = 0, goHit = 0, pend = 0;
+  (_predCardsData || []).forEach(c => {
+    const a = c.pairAdvice;
+    if (!a || a.verdict !== 'GO' || !a.pair) return;
+    if (!c.result) { pend++; return; }
+    const top3 = c.result.split('-').map(Number), boats = a.pair.split('・').map(Number);
+    go++; if (boats.every(b => top3.includes(b))) goHit++;
+  });
+  const rate = go > 0 ? Math.round(goHit / go * 1000) / 10 : 0;
+  return `<div class="metric amber">
+    <div class="metric-label">拡連複GOの的中率（検証中）</div>
+    <div class="metric-value">${go > 0 ? rate + '%' : '--'}</div>
+    <div class="metric-sub">${goHit} / ${go} R（結果待ち${pend}R）※回収率は未算出</div></div>`;
+}
+
+  
 function _cardRankBadge(cardRank) {
   if (!cardRank || cardRank.rank === '-') {
     return '<span style="font-size:10px;color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:1px 8px">判定不可</span>';
@@ -3383,13 +3430,20 @@ function renderPredictionCards() {
     const hfBadge = c.hfPass
       ? '<span style="font-size:10px;color:var(--green);border:1px solid var(--green);border-radius:10px;padding:1px 8px;margin-left:6px">HF通過</span>'
       : '';
+
+    const modeBadge = c.selectMode === 'learned'
+      ? '<span style="font-size:10px;color:var(--purple);border:1px solid var(--purple);border-radius:10px;padding:1px 8px;margin-left:6px">学習</span>'
+      : c.selectMode === 'blend'
+      ? '<span style="font-size:10px;color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:1px 8px;margin-left:6px">混合</span>'
+      : '';
+    
     const noBetBadge = c.hasActualBet
       ? ''
       : '<span style="font-size:10px;color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:1px 8px;margin-left:6px" title="実際には見送り(SKIP)されたレースです。表示は参考情報です。">参考表示</span>';
     const resultLine = c.result
       ? `<div style="font-size:14px;font-weight:700;color:var(--text);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">実際の着順: <span style="color:var(--cyan)">${c.result}</span></div>`
       : `<div style="font-size:13px;font-weight:700;color:var(--amber);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">結果未確定</div>`;
-
+    
     return `
       <div class="card" style="padding:12px 14px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -3397,7 +3451,7 @@ function renderPredictionCards() {
           ${_cardRankBadge(c.cardRank)}
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:11px;color:var(--cyan)">${formationIcon}${rTagBadge}${hfBadge}${noBetBadge}</span>
+          <span style="font-size:11px;color:var(--cyan)">${formationIcon}${modeBadge}${rTagBadge}${hfBadge}${noBetBadge}</span>
           ${_formationHitBadge(c)}
         </div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${c.dateStr} ${c.raceTime || ''}</div>
@@ -3406,6 +3460,7 @@ function renderPredictionCards() {
         ${_predRoleRow('対抗2', 'var(--green)', c.taikou2, c.matrixUsedRoles)}
         ${_predRoleRow('穴1',  'var(--amber)', c.ana1,    c.matrixUsedRoles)}
         ${_predRoleRow('穴2',  'var(--amber)', c.ana2,    c.matrixUsedRoles)}
+        ${_pairAdviceHtml(c)}
         ${resultLine}
       </div>`;
   }).join('');
