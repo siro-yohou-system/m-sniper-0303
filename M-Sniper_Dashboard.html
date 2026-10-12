@@ -3076,12 +3076,13 @@ function onFilterModeChange() {
   }
 }
 
-function _predHitBadge(hit) {
+function _predHitBadge(hit, okText, ngText) {
   if (hit === null || hit === undefined) return '<span style="color:var(--amber)">未確定</span>';
   return hit
-    ? '<span style="color:var(--green);font-weight:700">🎯的中</span>'
-    : '<span style="color:var(--text2)">✗不的中</span>';
+    ? `<span style="color:var(--green);font-weight:700">${okText || '3着内'}</span>`
+    : `<span style="color:var(--text2)">${ngText || '圏外'}</span>`;
 }
+
 function renderPredictionCardsSummary() {
   const wrap = document.getElementById('predcards-summary-grid');
   if (!wrap || !_predCardsSummary) return;
@@ -3124,7 +3125,8 @@ function _renderPredCardsHFVenueRate() {
   const color = pass ? 'var(--green)' : 'var(--red)';
   el.innerHTML = `${venues[0]}の直近30日的中率: <span style="color:${color};font-weight:700">${v.rate}%</span>（${v.hit}/${v.total}R）${pass ? ' ✓基準クリア' : ' ✗基準未達'}`;
 }
-function _predRoleRow(label, roleColor, boat, matrixUsedRoles) {
+  
+function _predRoleRow(label, roleColor, boat, matrixUsedRoles, okText, ngText) {
   const matrixBadge = (matrixUsedRoles || []).includes(label)
     ? '<span style="font-size:9px;color:var(--green);border:1px solid var(--green);border-radius:8px;padding:0 5px;margin-left:4px">実測</span>'
     : '';
@@ -3143,7 +3145,7 @@ function _predRoleRow(label, roleColor, boat, matrixUsedRoles) {
       <span style="font-size:11px;flex:1">
         <span style="color:${top3Color};font-weight:${top3Weight}">複勝期待${boat.top3Rate ?? '-'}%</span>${winPart}${matrixBadge}
       </span>
-      <span style="font-size:11px">${_predHitBadge(boat.hit)}</span>
+      <span style="font-size:11px">${_predHitBadge(boat.hit, okText, ngText)}</span>
     </div>`;
 }
 
@@ -3408,19 +3410,17 @@ function _cardRankBadge(cardRank) {
                    border-radius:10px;padding:1px 10px;letter-spacing:0.5px">${cardRank.rank}</span>`;
 }
 
+
 function _formationHitBadge(c) {
   if (c.result === null) {
     return '<span style="font-size:11px;color:var(--amber)">結果未確定</span>';
   }
   const typeLabel = c.formationType === 'trifecta' ? '🎯3連単' : '📦3連複';
-  if (c.formationHit) {
-    return `<span style="font-size:12px;font-weight:700;color:var(--green)">${typeLabel} 的中</span>`;
-  }
-  const shown = [c.axis, c.taikou1, c.taikou2, c.ana1, c.ana2].map(x => x && x.gate);
-  const out = c.result.split('-').map(Number).filter(g => !shown.includes(g));
-  const why = out.length ? `（カード外: ${out.join('・')}号艇）` : '';
-  return `<span style="font-size:12px;color:var(--text2)">${typeLabel} 不的中${why}</span>`;
+  return c.formationHit
+    ? `<span style="font-size:12px;font-weight:700;color:var(--green)">${typeLabel} 的中</span>`
+    : `<span style="font-size:12px;color:var(--text2)">${typeLabel} 不的中</span>`;
 }
+  
 
 
 // RESULT_MATRIX由来の3着以内率(÷3の誤り)を、GAS修正前に作られたカードだけ画面側で補正
@@ -3477,9 +3477,17 @@ function renderPredictionCards() {
     const noBetBadge = c.hasActualBet
       ? ''
       : '<span style="font-size:10px;color:var(--text2);border:1px solid var(--border);border-radius:10px;padding:1px 8px;margin-left:6px" title="実際には見送り(SKIP)されたレースです。表示は参考情報です。">参考表示</span>';
+    
+    const _outGates = c.result
+      ? c.result.split('-').map(Number).filter(g => ![c.axis, c.taikou1, c.taikou2, c.ana1, c.ana2].map(x => x && x.gate).includes(g))
+      : [];
+    const _outNote = _outGates.length
+      ? `<div style="font-size:11px;color:var(--amber);margin-top:2px">${_outGates.join('・')}号艇はカード外</div>`
+      : '';
     const resultLine = c.result
-      ? `<div style="font-size:14px;font-weight:700;color:var(--text);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">実際の着順: <span style="color:var(--cyan)">${c.result}</span></div>`
+      ? `<div style="font-size:14px;font-weight:700;color:var(--text);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">実際の着順: <span style="color:var(--cyan)">${c.result}</span>${_outNote}</div>`
       : `<div style="font-size:13px;font-weight:700;color:var(--amber);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">結果未確定</div>`;
+
     
     return `
       <div class="card" style="padding:12px 14px">
@@ -3492,7 +3500,10 @@ function renderPredictionCards() {
           ${_formationHitBadge(c)}
         </div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${c.dateStr} ${c.raceTime || ''}</div>
-        ${_predRoleRow('軸',   'var(--cyan)',  c.axis,    c.matrixUsedRoles)}
+        ${_predRoleRow('軸', 'var(--cyan)', c.axis, c.matrixUsedRoles,
+            c.formationType === 'trifecta' ? '1着' : undefined,
+            c.formationType === 'trifecta' ? '1着外' : undefined)}
+
         ${_predRoleRow('対抗1', 'var(--green)', c.taikou1, c.matrixUsedRoles)}
         ${_predRoleRow('対抗2', 'var(--green)', c.taikou2, c.matrixUsedRoles)}
         ${_predRoleRow('穴1',  'var(--amber)', c.ana1,    c.matrixUsedRoles)}
