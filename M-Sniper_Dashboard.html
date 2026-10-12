@@ -3418,7 +3418,25 @@ function _formationHitBadge(c) {
     : `<span style="font-size:12px;color:var(--text2)">${typeLabel} 不的中</span>`;
 }
 
-  
+
+// RESULT_MATRIX由来の3着以内率(÷3の誤り)を、GAS修正前に作られたカードだけ画面側で補正
+// ★GASを更新・デプロイした日時を入れてください(例: '2026/10/12 20:00')
+const MATRIX_TOP3_FIX_FROM = '2026/10/12 14:17';
+
+function _fixOldMatrixTop3(c) {
+  if (!c || !c.date || !(new Date(c.date) < new Date(MATRIX_TOP3_FIX_FROM.replace(/\//g, '-').replace(' ', 'T') + ':00+09:00'))) return c;
+  const used = c.matrixUsedRoles || [];
+  const map = { '軸': 'axis', '対抗1': 'taikou1', '対抗2': 'taikou2', '穴1': 'ana1', '穴2': 'ana2' };
+  const out = Object.assign({}, c);
+  Object.keys(map).forEach(label => {
+    const k = map[label];
+    if (used.includes(label) && out[k] && out[k].top3Rate != null) {
+      out[k] = Object.assign({}, out[k], { top3Rate: Math.min(100, Math.round(out[k].top3Rate * 3 * 10) / 10) });
+    }
+  });
+  return out;
+}
+
 
 function renderPredictionCards() {
   const grid = document.getElementById('predcards-grid');
@@ -3434,7 +3452,8 @@ function renderPredictionCards() {
     return;
   }
 
-  grid.innerHTML = filtered.map(c => {
+  grid.innerHTML = filtered.map(c0 => {
+    const c = _fixOldMatrixTop3(c0);
     const formationIcon = c.formationType === 'trifecta' ? '🎯3連単型' : '📦3連複型';
     const rTagBadge = c.rValueTag === 'SINGULARITY'
       ? '<span style="font-size:10px;color:#ffd700;border:1px solid #ffd700;border-radius:10px;padding:1px 8px;margin-left:6px">⚡特異点</span>'
