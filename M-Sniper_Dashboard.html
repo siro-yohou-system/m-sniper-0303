@@ -3413,9 +3413,13 @@ function _formationHitBadge(c) {
     return '<span style="font-size:11px;color:var(--amber)">結果未確定</span>';
   }
   const typeLabel = c.formationType === 'trifecta' ? '🎯3連単' : '📦3連複';
-  return c.formationHit
-    ? `<span style="font-size:12px;font-weight:700;color:var(--green)">${typeLabel} 的中</span>`
-    : `<span style="font-size:12px;color:var(--text2)">${typeLabel} 不的中</span>`;
+  if (c.formationHit) {
+    return `<span style="font-size:12px;font-weight:700;color:var(--green)">${typeLabel} 的中</span>`;
+  }
+  const shown = [c.axis, c.taikou1, c.taikou2, c.ana1, c.ana2].map(x => x && x.gate);
+  const out = c.result.split('-').map(Number).filter(g => !shown.includes(g));
+  const why = out.length ? `（カード外: ${out.join('・')}号艇）` : '';
+  return `<span style="font-size:12px;color:var(--text2)">${typeLabel} 不的中${why}</span>`;
 }
 
 
