@@ -3083,24 +3083,53 @@ function _predHitBadge(hit, okText, ngText) {
     : `<span style="color:var(--text2)">${ngText || '圏外'}</span>`;
 }
 
+
+
 function renderPredictionCardsSummary() {
   const wrap = document.getElementById('predcards-summary-grid');
   if (!wrap || !_predCardsSummary) return;
   const s = _predCardsSummary;
-  const rateColor = s.rate >= 50 ? 'var(--green)' : s.rate >= 30 ? 'var(--amber)' : 'var(--red)';
-  const hfColor = s.hfRate >= 50 ? 'var(--green)' : s.hfRate >= 30 ? 'var(--amber)' : 'var(--red)';
+  const threshold = document.getElementById('predcards-rank-select').value;
+
+  // 購入ベース: 結果確定 かつ 実際に購入したレース(見送りSKIPは除く)
+  let total = 0, hit = 0, hfTotal = 0, hfHit = 0, rankTotal = 0, rankHit = 0;
+  (_predCardsData || []).forEach(c => {
+    if (!c.result || c.hasActualBet === false) return;
+    const h = _purchaseHit(c);
+    if (h === null) return;
+    total++; if (h) hit++;
+    if (c.hfPass) { hfTotal++; if (h) hfHit++; }
+    if (_predCardMeetsRankThreshold(c.cardRank && c.cardRank.rank, threshold)) {
+      rankTotal++; if (h) rankHit++;
+    }
+  });
+  const pct = (a, b) => b > 0 ? Math.round(a / b * 1000) / 10 : 0;
+  const rate = pct(hit, total), hfRate = pct(hfHit, hfTotal), rankRate = pct(rankHit, rankTotal);
+
+  const colorOf = r => r >= 50 ? 'var(--green)' : r >= 30 ? 'var(--amber)' : 'var(--red)';
+  const rankLabel = threshold === 'ALL' ? '全ランク' : threshold + '以上';
+
   wrap.innerHTML = `
     <div class="metric cyan">
-      <div class="metric-label">予想カード 全体的中率</div>
-      <div class="metric-value" style="color:${rateColor}">${s.rate}%</div>
-      <div class="metric-sub">${s.hit} / ${s.total} R（結果確定分）</div>
+      <div class="metric-label">全体的中率・購入ベース（直近${s.days}日）</div>
+      <div class="metric-value" style="color:${colorOf(rate)}">${rate}%</div>
+      <div class="metric-sub">${hit} / ${total} R（結果確定・購入分）</div>
     </div>
     <div class="metric green">
-      <div class="metric-label">予想カード HF通過分の的中率</div>
-      <div class="metric-value" style="color:${hfColor}">${s.hfRate}%</div>
-      <div class="metric-sub">${s.hfHit} / ${s.hfTotal} R</div>
+      <div class="metric-label">HF通過分の的中率</div>
+      <div class="metric-value" style="color:${colorOf(hfRate)}">${hfRate}%</div>
+      <div class="metric-sub">${hfHit} / ${hfTotal} R</div>
+    </div>
+    <div class="metric purple">
+      <div class="metric-label">カードランク ${rankLabel} の的中率</div>
+      <div class="metric-value" style="color:${colorOf(rankRate)}">${rankRate}%</div>
+      <div class="metric-sub">${rankHit} / ${rankTotal} R</div>
     </div>`;
-} // ★ここに閉じカッコを追加してrenderPredictionCardsSummaryを終える
+
+  wrap.insertAdjacentHTML('beforeend', _pair2SummaryHtml());
+}
+
+
 
 function _renderPredCardsHFVenueRate() {
   const el = document.getElementById('predcards-hf-venue-rate');
