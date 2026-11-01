@@ -3333,7 +3333,7 @@ function renderPredictionCardsSummary() {
     </div>`;
 
     wrap.insertAdjacentHTML('beforeend', _pair2SummaryHtml());
-    wrap.insertAdjacentHTML('beforeend', _pairAdviceSummaryHtml());
+
   
 }
 
@@ -3566,7 +3566,6 @@ function renderPredictionCards() {
         ${_predRoleRow('穴1',  'var(--amber)', c.ana1,    c.matrixUsedRoles)}
         ${_predRoleRow('穴2',  'var(--amber)', c.ana2,    c.matrixUsedRoles)}
         ${_pair2Html(c)}
-        ${_pairAdviceHtml(c)}
         ${resultLine}
       </div>`;
   }).join('');
