@@ -3285,43 +3285,41 @@ function renderPredictionCardsSummary() {
   const s = _predCardsSummary;
   const threshold = document.getElementById('predcards-rank-select').value;
 
-  // 購入ベース: 結果確定 かつ 実際に購入したレース(見送りSKIPは除く)
-  let total = 0, hit = 0, hfTotal = 0, hfHit = 0, rankTotal = 0, rankHit = 0;
-  (_predCardsData || []).forEach(c => {
-    if (!c.result || c.hasActualBet === false) return;
-    const h = _purchaseHit(c);
-    if (h === null) return;
-    total++; if (h) hit++;
-    if (c.hfPass) { hfTotal++; if (h) hfHit++; }
-    if (_predCardMeetsRankThreshold(c.cardRank && c.cardRank.rank, threshold)) {
-      rankTotal++; if (h) rankHit++;
+  // ランク閾値に応じてbyRankから合算
+  let rankTotal = 0, rankHit = 0;
+  PREDCARD_RANK_ORDER.forEach(r => {
+    if (_predCardMeetsRankThreshold(r, threshold)) {
+      const b = s.byRank[r] || { total:0, hit:0 };
+      rankTotal += b.total;
+      rankHit += b.hit;
     }
   });
-  const pct = (a, b) => b > 0 ? Math.round(a / b * 1000) / 10 : 0;
-  const rate = pct(hit, total), hfRate = pct(hfHit, hfTotal), rankRate = pct(rankHit, rankTotal);
+  const rankRate = rankTotal > 0 ? Math.round(rankHit / rankTotal * 1000) / 10 : 0;
 
-  const colorOf = r => r >= 50 ? 'var(--green)' : r >= 30 ? 'var(--amber)' : 'var(--red)';
+  const rateColor = s.rate >= 50 ? 'var(--green)' : s.rate >= 30 ? 'var(--amber)' : 'var(--red)';
+  const hfColor = s.hfRate >= 50 ? 'var(--green)' : s.hfRate >= 30 ? 'var(--amber)' : 'var(--red)';
+  const rankColor = rankRate >= 50 ? 'var(--green)' : rankRate >= 30 ? 'var(--amber)' : 'var(--red)';
   const rankLabel = threshold === 'ALL' ? '全ランク' : threshold + '以上';
 
   wrap.innerHTML = `
     <div class="metric cyan">
-      <div class="metric-label">全体的中率・購入ベース（直近${s.days}日）</div>
-      <div class="metric-value" style="color:${colorOf(rate)}">${rate}%</div>
-      <div class="metric-sub">${hit} / ${total} R（結果確定・購入分）</div>
+      <div class="metric-label">全体的中率（直近${s.days}日）</div>
+      <div class="metric-value" style="color:${rateColor}">${s.rate}%</div>
+      <div class="metric-sub">${s.hit} / ${s.total} R（結果確定分）</div>
     </div>
     <div class="metric green">
       <div class="metric-label">HF通過分の的中率</div>
-      <div class="metric-value" style="color:${colorOf(hfRate)}">${hfRate}%</div>
-      <div class="metric-sub">${hfHit} / ${hfTotal} R</div>
+      <div class="metric-value" style="color:${hfColor}">${s.hfRate}%</div>
+      <div class="metric-sub">${s.hfHit} / ${s.hfTotal} R</div>
     </div>
     <div class="metric purple">
       <div class="metric-label">カードランク ${rankLabel} の的中率</div>
-      <div class="metric-value" style="color:${colorOf(rankRate)}">${rankRate}%</div>
+      <div class="metric-value" style="color:${rankColor}">${rankRate}%</div>
       <div class="metric-sub">${rankHit} / ${rankTotal} R</div>
     </div>`;
 
   wrap.insertAdjacentHTML('beforeend', _pair2SummaryHtml());
-} 
+}
 
   
 
@@ -3455,35 +3453,16 @@ function _cardRankBadge(cardRank) {
 }
 
 
-// 購入ベースの的中判定(実際の買い目の組み方と同じ)
-// 3連複型7点: 軸が3着以内 + 対抗1か対抗2のどちらかが3着以内(残り1艇は不問)
-// 3連単型8点: 1着=軸 + 2着=対抗1か対抗2(3着は不問)
-function _purchaseHit(c) {
-  if (!c || !c.result) return null;
-  const top3 = String(c.result).split('-').map(Number);
-  if (top3.length < 3 || top3.some(isNaN)) return null;
-  const ax = c.axis && c.axis.gate;
-  const t1 = c.taikou1 && c.taikou1.gate;
-  const t2 = c.taikou2 && c.taikou2.gate;
-  if (!ax) return null;
-  if (c.formationType === 'trifecta') {
-    return top3[0] === ax && (top3[1] === t1 || top3[1] === t2);
-  }
-  return top3.includes(ax) && (top3.includes(t1) || top3.includes(t2));
-}
-
+  
 function _formationHitBadge(c) {
   if (c.result === null) {
     return '<span style="font-size:11px;color:var(--amber)">結果未確定</span>';
   }
   const typeLabel = c.formationType === 'trifecta' ? '🎯3連単' : '📦3連複';
-  const hit = _purchaseHit(c);
-  return hit
-    ? `<span title="購入した買い目のどれかが的中" style="font-size:12px;font-weight:700;color:var(--green)">${typeLabel} 的中</span>`
-    : `<span title="購入した買い目は全て外れ" style="font-size:12px;color:var(--text2)">${typeLabel} 不的中</span>`;
+  return c.formationHit
+    ? `<span style="font-size:12px;font-weight:700;color:var(--green)">${typeLabel} 的中</span>`
+    : `<span style="font-size:12px;color:var(--text2)">${typeLabel} 不的中</span>`;
 }
-  
-
 
 // RESULT_MATRIX由来の3着以内率(÷3の誤り)を、GAS修正前に作られたカードだけ画面側で補正
 // ★GASを更新・デプロイした日時を入れてください(例: '2026/10/12 20:00')
