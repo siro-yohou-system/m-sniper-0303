@@ -3468,14 +3468,32 @@ function _cardRankBadge(cardRank) {
 }
 
 
+// 購入ベースの的中判定(実際の買い目の組み方と同じ)
+// 3連複型7点: 軸が3着以内 + 対抗1か対抗2のどちらかが3着以内(残り1艇は不問)
+// 3連単型8点: 1着=軸 + 2着=対抗1か対抗2(3着は不問)
+function _purchaseHit(c) {
+  if (!c || !c.result) return null;
+  const top3 = String(c.result).split('-').map(Number);
+  if (top3.length < 3 || top3.some(isNaN)) return null;
+  const ax = c.axis && c.axis.gate;
+  const t1 = c.taikou1 && c.taikou1.gate;
+  const t2 = c.taikou2 && c.taikou2.gate;
+  if (!ax) return null;
+  if (c.formationType === 'trifecta') {
+    return top3[0] === ax && (top3[1] === t1 || top3[1] === t2);
+  }
+  return top3.includes(ax) && (top3.includes(t1) || top3.includes(t2));
+}
+
 function _formationHitBadge(c) {
   if (c.result === null) {
     return '<span style="font-size:11px;color:var(--amber)">結果未確定</span>';
   }
   const typeLabel = c.formationType === 'trifecta' ? '🎯3連単' : '📦3連複';
-  return c.formationHit
-    ? `<span style="font-size:12px;font-weight:700;color:var(--green)">${typeLabel} 的中</span>`
-    : `<span style="font-size:12px;color:var(--text2)">${typeLabel} 不的中</span>`;
+  const hit = _purchaseHit(c);
+  return hit
+    ? `<span title="購入した買い目のどれかが的中" style="font-size:12px;font-weight:700;color:var(--green)">${typeLabel} 的中</span>`
+    : `<span title="購入した買い目は全て外れ" style="font-size:12px;color:var(--text2)">${typeLabel} 不的中</span>`;
 }
   
 
