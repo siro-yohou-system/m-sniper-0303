@@ -3318,6 +3318,7 @@ function renderPredictionCardsSummary() {
       <div class="metric-sub">${rankHit} / ${rankTotal} R</div>
     </div>`;
 
+  wrap.insertAdjacentHTML('beforeend', _cardRoiHtml(s));
   wrap.insertAdjacentHTML('beforeend', _pair2SummaryHtml());
 }
 
@@ -3555,6 +3556,23 @@ function renderPredictionCards() {
   }).join('');
 }
  
+
+function _cardRoiHtml(s) {
+  const r = s && s.roi;
+  if (!r || !r.all || r.all.n === 0) return '';
+  const col = v => v >= 100 ? 'var(--green)' : v >= 80 ? 'var(--amber)' : 'var(--red)';
+  const row = (label, o) => o.n > 0
+    ? `<div class="metric-sub">${label}: ${o.roi}%（的中${o.hit}/${o.n}R・損益${o.net >= 0 ? '+' : ''}${o.net.toLocaleString()}円）</div>` : '';
+  return `
+    <div class="metric cyan">
+      <div class="metric-label">全点購入の回収率（試算・直近${s.days}日）</div>
+      <div class="metric-value" style="color:${col(r.all.roi)}">${r.all.roi}%</div>
+      ${row('3連複型(7点)', r.trio)}
+      ${row('3連単型(8点)', r.trifecta)}
+      <div class="metric-sub" style="opacity:.7">※カードの買い目を全て買った場合の試算(見送りレース含む)。払戻の取得が済んだレースのみ対象。100%未満は赤字。</div>
+    </div>`;
+}
+
   
 // ── 初期ロード（確実に実行）
 window.addEventListener("load", () => { loadDashboard(); });
